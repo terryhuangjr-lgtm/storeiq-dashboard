@@ -3,6 +3,7 @@ export interface Store {
   name: string;
   shopify_domain: string;
   owner_email: string;
+  description?: string;
   created_at: string;
 }
 
