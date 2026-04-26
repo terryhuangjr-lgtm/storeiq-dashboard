@@ -5,7 +5,7 @@ interface VelocityChartProps {
   data: ProductPerformance[]
 }
 
-export default function VelocityChart({ data }: VelocityChartProps) {
+const VelocityChart = ({ data }: VelocityChartProps) => {
   const getPatternColor = (pattern: ProductPerformance['pattern']) => {
     switch (pattern) {
       case 'BESTSELLER': return '#10B981'
@@ -64,3 +64,5 @@ export default function VelocityChart({ data }: VelocityChartProps) {
     </div>
   )
 }
+
+export default VelocityChart

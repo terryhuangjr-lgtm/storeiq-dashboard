@@ -7,7 +7,7 @@ interface ChannelChartProps {
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6']
 
-export default function ChannelChart({ data }: ChannelChartProps) {
+const ChannelChart = ({ data }: ChannelChartProps) => {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -54,3 +54,5 @@ export default function ChannelChart({ data }: ChannelChartProps) {
     </div>
   )
 }
+
+export default ChannelChart

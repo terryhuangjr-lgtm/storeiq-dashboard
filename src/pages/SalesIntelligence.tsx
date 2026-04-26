@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { TrendingUp, Filter, ArrowUp, ArrowDown } from 'lucide-react'
-import { VelocityChart } from '../components/Charts/VelocityChart'
-import { ChannelChart } from '../components/Charts/ChannelChart'
+import VelocityChart from '../components/Charts/VelocityChart'
+import ChannelChart from '../components/Charts/ChannelChart'
 import { ProductPerformance, ChannelBreakdown } from '../lib/types'
 
 const mockProducts: ProductPerformance[] = [

@@ -1,11 +1,11 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { DailyRevenue } from '../../lib/types'
 
 interface RevenueChartProps {
   data: DailyRevenue[]
 }
 
-export default function RevenueChart({ data }: RevenueChartProps) {
+const RevenueChart = ({ data }: RevenueChartProps) => {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -59,3 +59,5 @@ export default function RevenueChart({ data }: RevenueChartProps) {
     </div>
   )
 }
+
+export default RevenueChart

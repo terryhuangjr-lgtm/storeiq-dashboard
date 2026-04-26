@@ -5,7 +5,7 @@ interface AlertBadgeProps {
   status?: 'success' | 'warning' | 'error'
 }
 
-export default function AlertBadge({ severity, status }: AlertBadgeProps) {
+const AlertBadge = ({ severity, status }: AlertBadgeProps) => {
   const config = {
     critical: { bg: 'bg-critical', text: 'text-critical', icon: AlertCircle, label: 'CRITICAL' },
     high: { bg: 'bg-danger', text: 'text-danger', icon: AlertTriangle, label: 'HIGH' },
@@ -35,3 +35,5 @@ export default function AlertBadge({ severity, status }: AlertBadgeProps) {
     </div>
   )
 }
+
+export default AlertBadge
