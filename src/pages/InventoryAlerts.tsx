@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AlertCircle, CheckCircle, Package, TrendingDown, AlertTriangle } from 'lucide-react'
-import { AlertBadge } from '../components/AlertBadge'
+import AlertBadge from '../components/AlertBadge'
 
 interface InventoryItem {
   id: string

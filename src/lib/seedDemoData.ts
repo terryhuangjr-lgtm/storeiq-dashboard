@@ -1,5 +1,4 @@
 import { supabase, isDemoMode } from './supabase'
-import { Database } from '../lib/types'
 
 export async function seedDemoData() {
   console.log('Seeding demo data...')

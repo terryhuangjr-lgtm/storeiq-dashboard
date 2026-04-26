@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Search, Filter } from 'lucide-react'
 import ActivityFeed from '../components/ActivityFeed'
-import { ActivityLog } from '../lib/types'
+import type { ActivityLog } from '../lib/types'
 
 const mockActivities: ActivityLog[] = [
   {
