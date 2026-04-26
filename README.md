@@ -142,17 +142,23 @@ See `src/lib/types.ts` for detailed type definitions.
 
 ## Deployment
 
-### Vercel
+### Vercel (Recommended)
 
-1. Connect your GitHub repository to Vercel
-2. Add environment variables:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-3. Deploy!
+1. Push code to GitHub repository
+2. Connect repository in Vercel dashboard
+3. Add environment variables:
+   - `VITE_SUPABASE_URL` - Your Supabase project URL
+   - `VITE_SUPABASE_ANON_KEY` - Your Supabase anon key
+4. Deploy! Your app will be live at `storeiq-dashboard.vercel.app`
 
 ### Supabase Setup
 
-Run the following SQL to create tables:
+1. Create a new project at https://supabase.com
+2. Navigate to SQL Editor
+3. Run the schema SQL from below
+4. Get your project URL and anon key from Settings > API
+
+### Schema SQL
 
 ```sql
 -- Stores table
