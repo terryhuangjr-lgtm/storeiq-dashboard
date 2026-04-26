@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AlertCircle, CheckCircle, Package, TrendingDown, AlertTriangle } from 'lucide-react'
 import AlertBadge from '../components/AlertBadge'
+import { supabase, isDemoMode } from '../lib/supabase'
 
 interface InventoryItem {
   id: string
@@ -21,57 +22,104 @@ interface DeadItem {
   recommendation: 'Flash Sale' | 'Bundle' | 'Discontinue'
 }
 
-const mockItems: InventoryItem[] = [
-  { id: '1', product: 'Premium Wireless Headphones', variant: 'Black', stock: 5, daysRemaining: 3, reorderQty: 100, status: 'critical' },
-  { id: '2', product: 'iPhone 15 Pro Case', variant: 'Blue', stock: 12, daysRemaining: 8, reorderQty: 200, status: 'critical' },
-  { id: '3', product: 'Smart Watch Series 5', variant: '42mm', stock: 8, daysRemaining: 12, reorderQty: 150, status: 'high' },
-  { id: '4', product: 'Laptop Stand', variant: 'Silver', stock: 45, daysRemaining: 35, reorderQty: 50, status: 'medium' },
-  { id: '5', product: 'Wireless Charger', variant: 'Black', stock: 67, daysRemaining: 42, reorderQty: 100, status: 'high' },
-  { id: '6', product: 'USB-C Cable', variant: '3m', stock: 89, daysRemaining: 58, reorderQty: 300, status: 'medium' },
-]
-
-const mockDeadItems: DeadItem[] = [
-  { id: '1', product: 'Vintage Bluetooth Speaker', units: 34, daysStagnant: 127, idleValue: 2040, recommendation: 'Flash Sale' },
-  { id: '2', product: 'Phone Stand Wooden', units: 78, daysStagnant: 98, idleValue: 1560, recommendation: 'Bundle' },
-  { id: '3', product: 'Screen Protector Kit', units: 156, daysStagnant: 156, idleValue: 3120, recommendation: 'Discontinue' },
-  { id: '4', product: 'Car Mount Magnetic', units: 45, daysStagnant: 89, idleValue: 1350, recommendation: 'Flash Sale' },
-]
-
-const getStatusColor = (status: InventoryItem['status']) => {
-  switch (status) {
-    case 'critical':
-      return 'bg-critical text-white'
-    case 'high':
-      return 'bg-danger text-white'
-    case 'medium':
-      return 'bg-warning text-white'
-    case 'low':
-      return 'bg-blue-500 text-white'
-  }
-}
-
-const getRecommendationColor = (rec: DeadItem['recommendation']) => {
-  switch (rec) {
-    case 'Flash Sale':
-      return 'bg-amber-100 text-amber-800'
-    case 'Bundle':
-      return 'bg-blue-100 text-blue-800'
-    case 'Discontinue':
-      return 'bg-red-100 text-red-800'
-  }
-}
-
 export default function InventoryAlerts() {
   const [filter, setFilter] = useState<'all' | 'critical' | 'high' | 'medium' | 'overstock'>('all')
+  const [items, setItems] = useState<InventoryItem[]>([])
+  const [deadItems, setDeadItems] = useState<DeadItem[]>([])
+  const [alerts, setAlerts] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data: storeData, error: storeError } = await supabase
+          .from('stores').select('id').limit(1).single()
+        if (storeError) throw storeError
+        const currentStoreId = storeData?.id
+
+        const { data: alertsData } = await supabase
+          .from('alerts').select('*').eq('store_id', currentStoreId)
+          .eq('is_resolved', false).order('severity')
+        if (alertsData) setAlerts(alertsData)
+
+        if ((!alertsData || alertsData.length === 0) && isDemoMode) {
+          setTimeout(() => {
+            setItems([
+              { id: '1', product: 'Supergel V Gloves', variant: 'Black', stock: 5, daysRemaining: 3, reorderQty: 100, status: 'critical' },
+              { id: '2', product: 'S40 Italian Leather Lace Up', variant: 'Brown', stock: 12, daysRemaining: 8, reorderQty: 50, status: 'critical' },
+              { id: '3', product: 'Supergel Pro Gloves', variant: 'Blue', stock: 8, daysRemaining: 12, reorderQty: 75, status: 'high' },
+              { id: '4', product: 'Fundamental 2.0 Shorts', variant: 'Black', stock: 45, daysRemaining: 35, reorderQty: 100, status: 'medium' },
+              { id: '5', product: 'Superare Hand Wraps', variant: 'White', stock: 67, daysRemaining: 42, reorderQty: 200, status: 'medium' },
+              { id: '6', product: 'Boxing Club NYC Tee', variant: 'Red', stock: 89, daysRemaining: 58, reorderQty: 300, status: 'medium' },
+            ])
+            setDeadItems([
+              { id: '1', product: 'Legacy Tee', units: 156, daysStagnant: 127, idleValue: 5928, recommendation: 'Flash Sale' },
+              { id: '2', product: 'One Series No Foul Protector', units: 34, daysStagnant: 127, idleValue: 3026, recommendation: 'Bundle' },
+            ])
+            setLoading(false)
+          }, 300)
+        } else {
+          setLoading(false)
+        }
+      } catch (err: any) {
+        console.error('Error fetching data:', err)
+        if (isDemoMode) {
+          setTimeout(() => {
+            setItems([
+              { id: '1', product: 'Supergel V Gloves', variant: 'Black', stock: 5, daysRemaining: 3, reorderQty: 100, status: 'critical' },
+              { id: '2', product: 'S40 Italian Leather Lace Up', variant: 'Brown', stock: 12, daysRemaining: 8, reorderQty: 50, status: 'critical' },
+              { id: '3', product: 'Supergel Pro Gloves', variant: 'Blue', stock: 8, daysRemaining: 12, reorderQty: 75, status: 'high' },
+              { id: '4', product: 'Fundamental 2.0 Shorts', variant: 'Black', stock: 45, daysRemaining: 35, reorderQty: 100, status: 'medium' },
+              { id: '5', product: 'Superare Hand Wraps', variant: 'White', stock: 67, daysRemaining: 42, reorderQty: 200, status: 'medium' },
+              { id: '6', product: 'Boxing Club NYC Tee', variant: 'Red', stock: 89, daysRemaining: 58, reorderQty: 300, status: 'medium' },
+            ])
+            setDeadItems([
+              { id: '1', product: 'Legacy Tee', units: 156, daysStagnant: 127, idleValue: 5928, recommendation: 'Flash Sale' },
+              { id: '2', product: 'One Series No Foul Protector', units: 34, daysStagnant: 127, idleValue: 3026, recommendation: 'Bundle' },
+            ])
+            setLoading(false)
+          }, 300)
+        } else {
+          setLoading(false)
+        }
+      }
+    }
+    fetchData()
+  }, [])
 
   const summary = {
-    critical: 2,
-    high: 2,
-    medium: 2,
+    critical: alerts.filter(a => a.severity === 'critical').length || 2,
+    high: alerts.filter(a => a.severity === 'high').length || 2,
+    medium: alerts.filter(a => a.severity === 'medium').length || 2,
     overstock: 3,
   }
 
-  const filteredItems = filter === 'all' ? mockItems : mockItems.filter(i => i.status === filter)
+  const getStatusColor = (status: InventoryItem['status']) => {
+    switch (status) {
+      case 'critical': return 'bg-critical text-white'
+      case 'high': return 'bg-danger text-white'
+      case 'medium': return 'bg-warning text-white'
+      case 'low': return 'bg-blue-500 text-white'
+    }
+  }
+
+  const getRecommendationColor = (rec: DeadItem['recommendation']) => {
+    switch (rec) {
+      case 'Flash Sale': return 'bg-amber-100 text-amber-800'
+      case 'Bundle': return 'bg-blue-100 text-blue-800'
+      case 'Discontinue': return 'bg-red-100 text-red-800'
+    }
+  }
+
+  const filteredItems = filter === 'all' ? items : items.filter(i => i.status === filter)
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -80,9 +128,7 @@ export default function InventoryAlerts() {
           <h1 className="text-2xl font-bold text-gray-900">Inventory Alerts</h1>
           <p className="text-gray-500 mt-1">Monitor stock levels and dead inventory</p>
         </div>
-        <div className="text-sm text-gray-500">
-          Last scan: Today at 2:30 PM
-        </div>
+        <div className="text-sm text-gray-500">Last scan: Today at 2:30 PM</div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -165,28 +211,39 @@ export default function InventoryAlerts() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredItems.map((item) => (
+              {(alerts.length > 0 ? alerts : filteredItems).map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                   <td className="py-4 px-4">
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(item.status)}`}>
-                      {item.status.toUpperCase()}
-                    </span>
+                    {item.severity ? (
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                        item.severity === 'critical' ? 'bg-critical text-white' :
+                        item.severity === 'high' ? 'bg-danger text-white' :
+                        item.severity === 'medium' ? 'bg-warning text-white' :
+                        'bg-blue-500 text-white'
+                      }`}>
+                        {(item.severity || item.status).toUpperCase()}
+                      </span>
+                    ) : (
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(item.status)}`}>
+                        {item.status.toUpperCase()}
+                      </span>
+                    )}
                   </td>
-                  <td className="py-4 px-4 font-medium text-gray-900">{item.product}</td>
-                  <td className="py-4 px-4 text-gray-600">{item.variant}</td>
-                  <td className="py-4 px-4 text-center font-medium text-gray-900">{item.stock}</td>
+                  <td className="py-4 px-4 font-medium text-gray-900">{item.product_name || item.product}</td>
+                  <td className="py-4 px-4 text-gray-600">{item.variant || '-'}</td>
+                  <td className="py-4 px-4 text-center font-medium text-gray-900">{item.value || item.stock}</td>
                   <td className="py-4 px-4 text-center">
                     <span className={`font-medium ${
-                      item.daysRemaining < 30
+                      (item.daysRemaining || 0) < 30
                         ? 'text-danger'
-                        : item.daysRemaining < 60
+                        : (item.daysRemaining || 0) < 60
                         ? 'text-warning'
                         : 'text-success'
                     }`}>
-                      {item.daysRemaining} days
+                      {item.daysRemaining || '-'} days
                     </span>
                   </td>
-                  <td className="py-4 px-4 text-center font-medium text-gray-900">{item.reorderQty}</td>
+                  <td className="py-4 px-4 text-center font-medium text-gray-900">{item.reorderQty || '-'}</td>
                   <td className="py-4 px-4 text-center">
                     <button className="px-4 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium hover:bg-primary/20 transition-colors">
                       Create PO
@@ -213,18 +270,14 @@ export default function InventoryAlerts() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {mockDeadItems.map((item) => (
+              {deadItems.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                   <td className="py-4 px-4 font-medium text-gray-900">{item.product}</td>
                   <td className="py-4 px-4 text-center text-gray-600">{item.units}</td>
                   <td className="py-4 px-4 text-center text-gray-600">{item.daysStagnant} days</td>
-                  <td className="py-4 px-4 text-right font-medium text-danger">
-                    ${item.idleValue.toLocaleString()}
-                  </td>
+                  <td className="py-4 px-4 text-right font-medium text-danger">${item.idleValue.toLocaleString()}</td>
                   <td className="py-4 px-4 text-center">
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                      getRecommendationColor(item.recommendation)
-                    }`}>
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getRecommendationColor(item.recommendation)}`}>
                       {item.recommendation}
                     </span>
                   </td>

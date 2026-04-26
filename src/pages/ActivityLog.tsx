@@ -1,190 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, Filter } from 'lucide-react'
 import ActivityFeed from '../components/ActivityFeed'
 import type { ActivityLog } from '../lib/types'
-
-const mockActivities: ActivityLog[] = [
-  {
-    id: '1',
-    store_id: '1',
-    action: 'Generated Sales Velocity Report',
-    summary: 'Analyzed 1,247 products for velocity trends and identified top performers',
-    details: 'Report covered March 1-31, 2026. Top product: Premium Wireless Headphones with 1,247 units sold. Identified 3 products needing immediate restock. Analysis took 2.3 seconds to complete.',
-    status: 'success',
-    created_at: '2026-04-26T10:30:00Z',
-  },
-  {
-    id: '2',
-    store_id: '1',
-    action: 'Updated Reorder Alerts',
-    summary: 'Scanned inventory levels and generated 23 reorder alerts',
-    details: 'Critical alerts: Premium Wireless Headphones (5 units), iPhone 15 Pro Case (12 units). Auto-generated purchase orders for 15 items. Sent notifications to procurement team.',
-    status: 'success',
-    created_at: '2026-04-26T09:15:00Z',
-  },
-  {
-    id: '3',
-    store_id: '1',
-    action: 'Customer Segmentation Analysis',
-    summary: 'Updated RFM segments for 3,421 customers',
-    details: '156 customers moved to Champions segment. 89 customers flagged as At-Risk. New customers in system: 423. Average LTV increased 12% compared to last quarter.',
-    status: 'success',
-    created_at: '2026-04-25T16:45:00Z',
-  },
-  {
-    id: '4',
-    store_id: '1',
-    action: 'Refund Pattern Detection',
-    summary: 'Detected unusual refund spike in Fashion category',
-    details: 'Fashion category refunds up 18% vs 30-day average. Primary cause: sizing issues with Denim Jacket (size M). Recommend updating size chart and adding fit guidance.',
-    status: 'error',
-    created_at: '2026-04-25T14:20:00Z',
-  },
-  {
-    id: '5',
-    store_id: '1',
-    action: 'Discount Performance Analysis',
-    summary: 'Analyzed Q1 discount campaigns and ROI',
-    details: 'BOGO promotions showing best ROI at 4.3x. Free shipping threshold at 6.6x ROI. Percentage discounts overused in electronics (-8% margin impact). Recommendation: Shift discount strategy.',
-    status: 'success',
-    created_at: '2026-04-25T11:30:00Z',
-  },
-  {
-    id: '6',
-    store_id: '1',
-    action: 'Dead Inventory Report Generated',
-    summary: 'Identified $8,940 in dead stock across 234 units',
-    details: 'Top dead items: Vintage Bluetooth Speaker (34 units, 127 days), Old Model Phone Cases (78 units, 98 days). Recommended actions: Flash sale (50% off), bundle promotions, discontinue obsolete items.',
-    status: 'warning',
-    created_at: '2026-04-24T15:45:00Z',
-  },
-  {
-    id: '7',
-    store_id: '1',
-    action: 'Cohort Analysis Completed',
-    summary: 'Analyzed customer retention across 6-month cohorts',
-    details: 'January 2026 cohort showing strongest retention (72% month 1). Mobile app users demonstrate 23% higher retention rate. Recommend expanding mobile app promotion campaigns.',
-    status: 'success',
-    created_at: '2026-04-24T09:20:00Z',
-  },
-  {
-    id: '8',
-    store_id: '1',
-    action: 'Automated Reorder Processing',
-    summary: 'Processed 47 purchase orders through supplier API',
-    details: 'Successfully submitted 47 POs to suppliers. Total value: $127,450. Expected delivery: 5-7 business days. 3 orders failed (TechCorp API timeout) - flagged for manual review.',
-    status: 'warning',
-    created_at: '2026-04-23T16:30:00Z',
-  },
-  {
-    id: '9',
-    store_id: '1',
-    action: 'Customer LTV Recalculation',
-    summary: 'Updated lifetime value metrics for all customers',
-    details: 'Champions segment LTV increased to $2,840 avg. At-Risk segment: 234 customers identified with estimated recoverable revenue of $15,420. New customer acquisition up 61% QoQ.',
-    status: 'success',
-    created_at: '2026-04-23T14:15:00Z',
-  },
-  {
-    id: '10',
-    store_id: '1',
-    action: 'Inventory Sync Completed',
-    summary: 'Synced 2,847 product variants with Shopify',
-    details: 'Updated stock levels across all channels. Resolved 12 sync conflicts. Detected 56 discrepancies between local and Shopify inventory - flagged for review. Sync duration: 4.2 minutes.',
-    status: 'success',
-    created_at: '2026-04-23T08:45:00Z',
-  },
-  {
-    id: '11',
-    store_id: '1',
-    action: 'Email Campaign Performance Review',
-    summary: 'Analyzed Q1 email campaign performance metrics',
-    details: 'Open rate: 34.2% (industry avg: 21.5%). Click-through rate: 8.7%. Revenue generated: $89,450. Best performing campaign: Spring Collection Launch (42% open rate). Recommend testing new subject line formats.',
-    status: 'success',
-    created_at: '2026-04-22T13:20:00Z',
-  },
-  {
-    id: '12',
-    store_id: '1',
-    action: 'Supplier Price Update Processed',
-    summary: 'Updated pricing for 156 products from 8 suppliers',
-    details: 'Average price change: +3.2%. 23 products with significant increases (>10%) flagged for margin review. Auto-adjusted retail prices for 134 products. 22 products require manual review due to contract terms.',
-    status: 'warning',
-    created_at: '2026-04-22T11:00:00Z',
-  },
-  {
-    id: '13',
-    store_id: '1',
-    action: 'Abandoned Cart Recovery Campaign',
-    summary: 'Sent recovery emails to 847 abandoned carts',
-    details: 'Recovery rate: 12.4% ($15,230 recovered). Average order value of recovered carts: $182. Best performing email template: Urgency + Social Proof (18% recovery rate). Recommend increasing email frequency.',
-    status: 'success',
-    created_at: '2026-04-21T17:30:00Z',
-  },
-  {
-    id: '14',
-    store_id: '1',
-    action: 'Product Description Optimization',
-    summary: 'Updated SEO and descriptions for 234 products',
-    details: 'Improved keyword density by 23%. Added customer review snippets to 156 products. Generated unique meta descriptions. Expected traffic increase: 15-20% based on similar optimizations in past.',
-    status: 'success',
-    created_at: '2026-04-21T10:15:00Z',
-  },
-  {
-    id: '15',
-    store_id: '1',
-    action: 'Returns Analysis Report',
-    summary: 'Analyzed return patterns and reasons for Q1',
-    details: 'Overall return rate: 8.4% (up from 6.2% last quarter). Fashion category driving increase (14.2% return rate). Primary reasons: sizing (45%), quality issues (23%), not as described (18%). Action plan: enhanced sizing guides, quality control checkpoints.',
-    status: 'error',
-    created_at: '2026-04-20T14:45:00Z',
-  },
-  {
-    id: '16',
-    store_id: '1',
-    action: 'Mobile App User Engagement Review',
-    summary: 'Analyzed mobile app user behavior and engagement metrics',
-    details: 'Daily active users: 1,247 (up 34% MoM). Average session duration: 4.2 minutes. Push notification open rate: 67%. In-app purchase conversion: 12.4%. Recommend: add wishlist feature, implement loyalty card scanning.',
-    status: 'success',
-    created_at: '2026-04-20T09:30:00Z',
-  },
-  {
-    id: '17',
-    store_id: '1',
-    action: 'Competitor Price Monitoring',
-    summary: 'Monitored pricing across 15 key competitors',
-    details: '342 price changes detected this week. Our prices competitive on 78% of products. 23 products priced 5-10% above market - flagged for review. 12 products positioned as premium (+15-20% above market) - within acceptable range for brand positioning.',
-    status: 'success',
-    created_at: '2026-04-19T16:00:00Z',
-  },
-  {
-    id: '18',
-    store_id: '1',
-    action: 'Content Marketing Performance Report',
-    summary: 'Blog and content performance analysis for Q1',
-    details: 'Total blog posts: 24. Average traffic per post: 1,240 visits. Conversion rate from content: 3.2%. Top performing topic: "Sustainable Fashion Trends" (5,670 visits, 89 conversions). Recommend: double down on sustainability content.',
-    status: 'success',
-    created_at: '2026-04-19T12:30:00Z',
-  },
-  {
-    id: '19',
-    store_id: '1',
-    action: 'Seasonal Demand Forecast Updated',
-    summary: 'Updated Q2 demand forecasts based on historical data',
-    details: 'Expected Q2 revenue: $1.45M (up 18% YoY). Peak categories: Spring Fashion (+45%), Outdoor Living (+38%), Gardening (+42%). Recommend: Increase inventory allocation for seasonal categories by 25%.',
-    status: 'success',
-    created_at: '2026-04-18T15:20:00Z',
-  },
-  {
-    id: '20',
-    store_id: '1',
-    action: 'Loyalty Program Member Analysis',
-    summary: 'Analyzed loyalty program effectiveness and member behavior',
-    details: 'Total members: 2,847. Active members (30-day purchase): 1,892 (66.5%). Average spend per member: $420 vs $180 for non-members. Tier distribution: Gold 12%, Silver 28%, Bronze 60%. ROI: 4.2x. Recommend: add diamond tier for top 5% customers.',
-    status: 'success',
-    created_at: '2026-04-18T10:45:00Z',
-  },
-]
+import { supabase, isDemoMode } from '../lib/supabase'
 
 const ITEMS_PER_PAGE = 20
 
@@ -192,13 +10,206 @@ export default function ActivityLog() {
   const [filter, setFilter] = useState<'all' | 'success' | 'warning' | 'error'>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [activities, setActivities] = useState<ActivityLog[]>([])
+  const [loading, setLoading] = useState(true)
+  const [totalCount, setTotalCount] = useState(0)
 
-  const filteredActivities = mockActivities.filter((activity) => {
-    const matchesFilter = filter === 'all' || activity.status === filter
-    const matchesSearch = searchTerm === '' || 
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        const { data: storeData, error: storeError } = await supabase
+          .from('stores').select('id').limit(1).single()
+        if (storeError) throw storeError
+        const currentStoreId = storeData?.id
+
+        let query = supabase
+          .from('activity_log').select('*', { count: 'exact' })
+          .eq('store_id', currentStoreId)
+          .order('created_at', { ascending: false })
+
+        if (filter !== 'all') {
+          query = query.eq('status', filter)
+        }
+
+        const { count, error: countError } = await query
+        if (countError) throw countError
+        setTotalCount(count || 0)
+
+        const from = (currentPage - 1) * ITEMS_PER_PAGE
+        const to = from + ITEMS_PER_PAGE - 1
+        query = query.range(from, to)
+
+        const { data, error } = await query
+        if (error) throw error
+
+        if (data && data.length > 0) {
+          setActivities(data)
+        } else if (isDemoMode) {
+          setActivities(getDemoActivities())
+          setTotalCount(getDemoActivities().length)
+        }
+      } catch (err: any) {
+        console.error('Error fetching activities:', err)
+        if (isDemoMode) {
+          setActivities(getDemoActivities())
+          setTotalCount(getDemoActivities().length)
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchActivities()
+  }, [filter, currentPage])
+
+  const getDemoActivities = (): ActivityLog[] => [
+    {
+      id: '1', store_id: '1',
+      action: 'Generated Sales Velocity Report',
+      summary: 'Analyzed 234 Superare fight gear products for velocity trends',
+      details: 'Top categories: Boxing Gloves (+23%), Training Gear (+12%), Apparel (+8%)',
+      status: 'success', created_at: '2026-04-26T10:30:00Z',
+    },
+    {
+      id: '2', store_id: '1',
+      action: 'Updated Reorder Alerts',
+      summary: 'Identified 23 fight gear products below reorder threshold',
+      details: 'Top priority: Supergel V Gloves (5 pairs remaining)',
+      status: 'warning', created_at: '2026-04-26T09:15:00Z',
+    },
+    {
+      id: '3', store_id: '1',
+      action: 'Customer Segmentation Analysis',
+      summary: 'Updated RFM segments for 3,421 boxing customers',
+      details: '156 professional fighters moved to Champions segment',
+      status: 'success', created_at: '2026-04-25T16:45:00Z',
+    },
+    {
+      id: '4', store_id: '1',
+      action: 'Refund Pattern Detection',
+      summary: 'Detected unusual refund spike in Boxing Gloves category',
+      details: '12% increase vs. 30-day average. Sizing issues with leather gloves.',
+      status: 'error', created_at: '2026-04-25T14:20:00Z',
+    },
+    {
+      id: '5', store_id: '1',
+      action: 'Generated Dead Inventory Report',
+      summary: 'Identified $8,940 in stagnant fight gear inventory',
+      details: '47 products stagnant for 90+ days. Flash sale recommended for Legacy collection.',
+      status: 'success', created_at: '2026-04-24T15:45:00Z',
+    },
+    {
+      id: '6', store_id: '1',
+      action: 'Processed Automated Reorders',
+      summary: 'Submitted 15 purchase orders for fight gear to suppliers',
+      details: 'Total value: $45,670. Expected delivery: 5-7 business days.',
+      status: 'success', created_at: '2026-04-24T11:30:00Z',
+    },
+    {
+      id: '7', store_id: '1',
+      action: 'Discount Performance Analysis',
+      summary: 'Analyzed Q1 discount campaigns for boxing equipment',
+      details: 'BOGO promotions showing 4.3x ROI on glove bundles. Recommend strategy shift.',
+      status: 'success', created_at: '2026-04-23T14:00:00Z',
+    },
+    {
+      id: '8', store_id: '1',
+      action: 'Mobile App User Review',
+      summary: 'Analyzed mobile engagement for Superare app users',
+      details: 'DAU up 34% MoM. Push notification open rate: 67%.',
+      status: 'success', created_at: '2026-04-23T10:30:00Z',
+    },
+    {
+      id: '9', store_id: '1',
+      action: 'Competitor Price Monitoring',
+      summary: 'Checked pricing across 15 fight gear competitors',
+      details: '342 price changes detected. 78% of Superare products competitively priced.',
+      status: 'success', created_at: '2026-04-22T16:00:00Z',
+    },
+    {
+      id: '10', store_id: '1',
+      action: 'Email Campaign Performance',
+      summary: 'Q1 email marketing analysis for boxing community',
+      details: 'Open rate: 34.2%. Revenue generated: $89,450. Top: Championship Collection launch.',
+      status: 'success', created_at: '2026-04-22T12:30:00Z',
+    },
+    {
+      id: '11', store_id: '1',
+      action: 'Returns Analysis Complete',
+      summary: 'Q1 return patterns analyzed for fight gear',
+      details: 'Leather headgear return rate: 8.2%. Enhanced sizing guides recommended.',
+      status: 'error', created_at: '2026-04-21T17:45:00Z',
+    },
+    {
+      id: '12', store_id: '1',
+      action: 'Loyalty Program Review',
+      summary: 'Analyzed 2,847 Superare Fight Club members',
+      details: 'Active members: 66.5%. ROI: 4.2x. Diamond tier recommended for pros.',
+      status: 'success', created_at: '2026-04-21T10:15:00Z',
+    },
+    {
+      id: '13', store_id: '1',
+      action: 'Seasonal Forecast Updated',
+      summary: 'Q2 demand forecast for boxing equipment generated',
+      details: 'Expected revenue: $1.45M. Training gear (+45%) leading growth.',
+      status: 'success', created_at: '2026-04-20T15:20:00Z',
+    },
+    {
+      id: '14', store_id: '1',
+      action: 'Content Marketing Review',
+      summary: 'Q1 blog performance for fight gear content',
+      details: '24 posts generated 30,000+ visits. Technique guides performing best.',
+      status: 'success', created_at: '2026-04-20T09:30:00Z',
+    },
+    {
+      id: '15', store_id: '1',
+      action: 'Abandoned Cart Recovery',
+      summary: 'Sent recovery emails for 847 abandoned boxing gear carts',
+      details: 'Recovery rate: 12.4%. $15,230 recovered. Recommend frequency increase.',
+      status: 'success', created_at: '2026-04-19T17:30:00Z',
+    },
+    {
+      id: '16', store_id: '1',
+      action: 'Supplier Price Updates',
+      summary: 'Updated pricing for 156 fight gear products',
+      details: 'Average increase: 3.2%. 23 leather glove products flagged for margin review.',
+      status: 'warning', created_at: '2026-04-19T14:00:00Z',
+    },
+    {
+      id: '17', store_id: '1',
+      action: 'Inventory Sync Completed',
+      summary: 'Synced 2,847 Superare products with Shopify',
+      details: '56 discrepancies detected. 12 sync conflicts resolved.',
+      status: 'success', created_at: '2026-04-18T16:30:00Z',
+    },
+    {
+      id: '18', store_id: '1',
+      action: 'Customer LTV Recalculation',
+      summary: 'Updated lifetime value for boxing customer segments',
+      details: 'Champions avg LTV: $2,840. At-Risk recoverable: $15,420.',
+      status: 'success', created_at: '2026-04-18T10:45:00Z',
+    },
+    {
+      id: '19', store_id: '1',
+      action: 'Product Description Updates',
+      summary: 'Optimized 234 fight gear product descriptions',
+      details: 'SEO improvements: +23% keyword density. Expected traffic: +18%.',
+      status: 'success', created_at: '2026-04-17T11:15:00Z',
+    },
+    {
+      id: '20', store_id: '1',
+      action: 'Generated Cohort Analysis',
+      summary: 'Multi-month cohort retention for boxing customers',
+      details: 'January cohort: 72% month-1 retention. Mobile users: +23% retention.',
+      status: 'success', created_at: '2026-04-15T14:20:00Z',
+    },
+  ]
+
+  const filteredActivities = activities.filter(activity => {
+    if (searchTerm === '') return true
+    return (
       activity.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
       activity.summary.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesFilter && matchesSearch
+    )
   })
 
   const totalPages = Math.ceil(filteredActivities.length / ITEMS_PER_PAGE)
@@ -206,6 +217,14 @@ export default function ActivityLog() {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   )
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -252,9 +271,7 @@ export default function ActivityLog() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between pt-6 border-t border-gray-100">
             <p className="text-sm text-gray-500">
-              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
-              {Math.min(currentPage * ITEMS_PER_PAGE, filteredActivities.length)} of{' '}
-              {filteredActivities.length} activities
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredActivities.length)} of {filteredActivities.length} activities
             </p>
             <div className="flex gap-2">
               <button
