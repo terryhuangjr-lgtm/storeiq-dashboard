@@ -375,12 +375,299 @@ export async function seedDemoData() {
     console.error('Error creating reports:', reportsError)
   }
 
+  // Create product performance data
+  const productPerformance = [
+    {
+      store_id: storeId,
+      name: 'Supergel V Gloves',
+      units_sold: 1247,
+      revenue: 149640,
+      trend: 23,
+      pattern: 'BESTSELLER' as const,
+    },
+    {
+      store_id: storeId,
+      name: 'Supergel Pro Gloves',
+      units_sold: 892,
+      revenue: 133800,
+      trend: 18,
+      pattern: 'BESTSELLER' as const,
+    },
+    {
+      store_id: storeId,
+      name: 'World Champion Tee',
+      units_sold: 2103,
+      revenue: 94635,
+      trend: 45,
+      pattern: 'SEASONAL' as const,
+    },
+    {
+      store_id: storeId,
+      name: 'Fundamental 2.0 Shorts',
+      units_sold: 567,
+      revenue: 36855,
+      trend: 12,
+      pattern: 'BESTSELLER' as const,
+    },
+    {
+      store_id: storeId,
+      name: 'Superare Hand Wraps',
+      units_sold: 445,
+      revenue: 11125,
+      trend: -8,
+      pattern: 'DECLINING' as const,
+    },
+    {
+      store_id: storeId,
+      name: 'Boxing Club NYC Tee',
+      units_sold: 389,
+      revenue: 17505,
+      trend: 15,
+      pattern: 'BESTSELLER' as const,
+    },
+    {
+      store_id: storeId,
+      name: 'One Series Leather Headgear',
+      units_sold: 256,
+      revenue: 38144,
+      trend: 31,
+      pattern: 'SEASONAL' as const,
+    },
+    {
+      store_id: storeId,
+      name: 'Finisher Dad Hat',
+      units_sold: 189,
+      revenue: 3591,
+      trend: -5,
+      pattern: 'DECLINING' as const,
+    },
+    {
+      store_id: storeId,
+      name: 'S40 Italian Leather Lace Up',
+      units_sold: 334,
+      revenue: 46760,
+      trend: 22,
+      pattern: 'NEW LAUNCH' as const,
+    },
+  ]
+
+  const { error: productError } = await supabase
+    .from('product_performance')
+    .insert(productPerformance)
+
+  if (productError && !productError.message.includes('duplicate')) {
+    console.error('Error creating product performance:', productError)
+  }
+
+  // Create channel breakdown data
+  const channelBreakdown = [
+    {
+      store_id: storeId,
+      channel: 'Direct',
+      revenue: 456780,
+      percentage: 36.8,
+    },
+    {
+      store_id: storeId,
+      channel: 'Google Ads',
+      revenue: 324560,
+      percentage: 26.2,
+    },
+    {
+      store_id: storeId,
+      channel: 'Instagram',
+      revenue: 234890,
+      percentage: 19.0,
+    },
+    {
+      store_id: storeId,
+      channel: 'Email',
+      revenue: 158760,
+      percentage: 12.8,
+    },
+    {
+      store_id: storeId,
+      channel: 'Facebook',
+      revenue: 65410,
+      percentage: 5.2,
+    },
+  ]
+
+  const { error: channelError } = await supabase
+    .from('channel_breakdown')
+    .insert(channelBreakdown)
+
+  if (channelError && !channelError.message.includes('duplicate')) {
+    console.error('Error creating channel breakdown:', channelError)
+  }
+
+  // Create customer segments
+  const customerSegments = [
+    {
+      store_id: storeId,
+      segment: 'Champions',
+      count: 156,
+      revenue_percentage: 32.5,
+      avg_ltv: 2840,
+      color: '#10B981',
+    },
+    {
+      store_id: storeId,
+      segment: 'Loyal',
+      count: 289,
+      revenue_percentage: 28.2,
+      avg_ltv: 1680,
+      color: '#3B82F6',
+    },
+    {
+      store_id: storeId,
+      segment: 'At-Risk',
+      count: 234,
+      revenue_percentage: 18.7,
+      avg_ltv: 920,
+      color: '#F59E0B',
+    },
+    {
+      store_id: storeId,
+      segment: 'Lost',
+      count: 187,
+      revenue_percentage: 12.3,
+      avg_ltv: 340,
+      color: '#EF4444',
+    },
+    {
+      store_id: storeId,
+      segment: 'New',
+      count: 423,
+      revenue_percentage: 5.8,
+      avg_ltv: 280,
+      color: '#8B5CF6',
+    },
+    {
+      store_id: storeId,
+      segment: 'One-Time',
+      count: 192,
+      revenue_percentage: 2.5,
+      avg_ltv: 120,
+      color: '#6B7280',
+    },
+  ]
+
+  const { error: segmentsError } = await supabase
+    .from('customer_segments')
+    .insert(customerSegments)
+
+  if (segmentsError && !segmentsError.message.includes('duplicate')) {
+    console.error('Error creating customer segments:', segmentsError)
+  }
+
+  // Create customer data
+  const customers = [
+    {
+      store_id: storeId,
+      name: 'Sarah Johnson',
+      email: 'sarah.j@email.com',
+      total_orders: 47,
+      lifetime_value: 4280,
+      last_order: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      segment: 'Champions',
+    },
+    {
+      store_id: storeId,
+      name: 'Michael Chen',
+      email: 'm.chen@email.com',
+      total_orders: 38,
+      lifetime_value: 3920,
+      last_order: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      segment: 'Champions',
+    },
+    {
+      store_id: storeId,
+      name: 'Emily Rodriguez',
+      email: 'emily.r@email.com',
+      total_orders: 32,
+      lifetime_value: 2840,
+      last_order: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      segment: 'Loyal',
+    },
+    {
+      store_id: storeId,
+      name: 'David Kim',
+      email: 'david.k@email.com',
+      total_orders: 28,
+      lifetime_value: 2150,
+      last_order: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+      segment: 'Loyal',
+    },
+    {
+      store_id: storeId,
+      name: 'Jessica Williams',
+      email: 'jessica.w@email.com',
+      total_orders: 24,
+      lifetime_value: 1890,
+      last_order: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+      segment: 'At-Risk',
+    },
+  ]
+
+  const { error: customersError } = await supabase
+    .from('customers')
+    .insert(customers)
+
+  if (customersError && !customersError.message.includes('duplicate')) {
+    console.error('Error creating customers:', customersError)
+  }
+
+  // Create cohort data
+  const cohortData = [
+    {
+      store_id: storeId,
+      month: 'Dec 2025',
+      new: 245,
+      returning: 189,
+    },
+    {
+      store_id: storeId,
+      month: 'Jan 2026',
+      new: 312,
+      returning: 234,
+    },
+    {
+      store_id: storeId,
+      month: 'Feb 2026',
+      new: 278,
+      returning: 267,
+    },
+    {
+      store_id: storeId,
+      month: 'Mar 2026',
+      new: 356,
+      returning: 298,
+    },
+    {
+      store_id: storeId,
+      month: 'Apr 2026',
+      new: 289,
+      returning: 412,
+    },
+  ]
+
+  const { error: cohortError } = await supabase
+    .from('cohort_data')
+    .insert(cohortData)
+
+  if (cohortError && !cohortError.message.includes('duplicate')) {
+    console.error('Error creating cohort data:', cohortError)
+  }
+
   console.log('✅ Demo data seeded successfully!')
   console.log(`Store: ${storeId}`)
   console.log(`- ${metrics.length} days of metrics`)
   console.log(`- ${activities.length} activity logs`)
   console.log(`- ${alerts.length} active alerts`)
   console.log(`- ${reports.length} reports`)
+  console.log(`- ${productPerformance.length} products`)
+  console.log(`- ${customers.length} customers`)
 }
 
 // Auto-seed on first load if in demo mode

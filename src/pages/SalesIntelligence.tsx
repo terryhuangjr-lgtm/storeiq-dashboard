@@ -1,29 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { TrendingUp, Filter, ArrowUp, ArrowDown } from 'lucide-react'
 import VelocityChart from '../components/Charts/VelocityChart'
 import ChannelChart from '../components/Charts/ChannelChart'
 import { ProductPerformance, ChannelBreakdown } from '../lib/types'
-
-const mockProducts: ProductPerformance[] = [
-  { name: 'Premium Wireless Headphones', unitsSold: 1247, revenue: 149640, trend: 23, pattern: 'BESTSELLER' },
-  { name: 'Smart Watch Series 5', unitsSold: 892, revenue: 133800, trend: 18, pattern: 'BESTSELLER' },
-  { name: 'iPhone 15 Pro Case', unitsSold: 2103, revenue: 63090, trend: 45, pattern: 'SEASONAL' },
-  { name: 'Laptop Stand Adjustable', unitsSold: 567, revenue: 28350, trend: 12, pattern: 'NEW LAUNCH' },
-  { name: 'Wireless Charger Pad', unitsSold: 445, revenue: 22250, trend: -8, pattern: 'DECLINING' },
-  { name: 'Bluetooth Earbuds Pro', unitsSold: 389, revenue: 38900, trend: 15, pattern: 'BESTSELLER' },
-  { name: 'USB-C Hub 7-in-1', unitsSold: 334, revenue: 20040, trend: 22, pattern: 'NEW LAUNCH' },
-  { name: 'Phone Camera Lens Kit', unitsSold: 278, revenue: 16680, trend: -5, pattern: 'DECLINING' },
-  { name: 'Portable Power Bank 20k', unitsSold: 256, revenue: 25600, trend: 31, pattern: 'SEASONAL' },
-  { name: 'Screen Protector Pack', unitsSold: 189, revenue: 5670, trend: -12, pattern: 'DECLINING' },
-]
-
-const mockChannels: ChannelBreakdown[] = [
-  { channel: 'Direct', revenue: 456780, percentage: 36.8 },
-  { channel: 'Google Ads', revenue: 324560, percentage: 26.2 },
-  { channel: 'Instagram', revenue: 234890, percentage: 19.0 },
-  { channel: 'Email', revenue: 158760, percentage: 12.8 },
-  { channel: 'Facebook', revenue: 65410, percentage: 5.2 },
-]
+import { supabase, isDemoMode } from '../lib/supabase'
 
 const getPatternColor = (pattern: ProductPerformance['pattern']) => {
   switch (pattern) {
@@ -42,10 +22,90 @@ const getPatternColor = (pattern: ProductPerformance['pattern']) => {
 
 export default function SalesIntelligence() {
   const [dateRange, setDateRange] = useState('30')
+  const [products, setProducts] = useState<ProductPerformance[]>([])
+  const [channels, setChannels] = useState<ChannelBreakdown[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data: storeData, error: storeError } = await supabase
+          .from('stores').select('id').limit(1).single()
+        if (storeError) throw storeError
+        const currentStoreId = storeData?.id
+
+        // Fetch product performance
+        const { data: productsData } = await supabase
+          .from('product_performance')
+          .select('*')
+          .eq('store_id', currentStoreId)
+          .order('units_sold', { ascending: false })
+
+        if (productsData && productsData.length > 0) {
+          setProducts(productsData)
+        } else if (isDemoMode) {
+          setProducts(getDemoProducts())
+        }
+
+        // Fetch channel breakdown
+        const { data: channelsData } = await supabase
+          .from('channel_breakdown')
+          .select('*')
+          .eq('store_id', currentStoreId)
+          .order('revenue', { ascending: false })
+
+        if (channelsData && channelsData.length > 0) {
+          setChannels(channelsData)
+        } else if (isDemoMode) {
+          setChannels(getDemoChannels())
+        }
+      } catch (err: any) {
+        console.error('Error fetching data:', err)
+        if (isDemoMode) {
+          setProducts(getDemoProducts())
+          setChannels(getDemoChannels())
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
+  const getDemoProducts = (): ProductPerformance[] => [
+    { name: 'Supergel V Gloves', unitsSold: 1247, revenue: 149640, trend: 23, pattern: 'BESTSELLER' },
+    { name: 'Supergel Pro Gloves', unitsSold: 892, revenue: 133800, trend: 18, pattern: 'BESTSELLER' },
+    { name: 'World Champion Tee', unitsSold: 2103, revenue: 94635, trend: 45, pattern: 'SEASONAL' },
+    { name: 'Fundamental 2.0 Shorts', unitsSold: 567, revenue: 36855, trend: 12, pattern: 'BESTSELLER' },
+    { name: 'Superare Hand Wraps', unitsSold: 445, revenue: 11125, trend: -8, pattern: 'DECLINING' },
+    { name: 'Boxing Club NYC Tee', unitsSold: 389, revenue: 17505, trend: 15, pattern: 'BESTSELLER' },
+    { name: 'One Series Leather Headgear', unitsSold: 256, revenue: 38144, trend: 31, pattern: 'SEASONAL' },
+    { name: 'Finisher Dad Hat', unitsSold: 189, revenue: 3591, trend: -5, pattern: 'DECLINING' },
+    { name: 'S40 Italian Leather Lace Up', unitsSold: 334, revenue: 46760, trend: 22, pattern: 'NEW LAUNCH' },
+  ]
+
+  const getDemoChannels = (): ChannelBreakdown[] => [
+    { channel: 'Direct', revenue: 456780, percentage: 36.8 },
+    { channel: 'Google Ads', revenue: 324560, percentage: 26.2 },
+    { channel: 'Instagram', revenue: 234890, percentage: 19.0 },
+    { channel: 'Email', revenue: 158760, percentage: 12.8 },
+    { channel: 'Facebook', revenue: 65410, percentage: 5.2 },
+  ]
 
   const totalProjected = 145680
 
-  const bottomProducts = mockProducts.slice(-5).reverse()
+  const bottomProducts = (products.length > 0 ? products : getDemoProducts()).slice(-5).reverse()
+
+  const displayProducts = products.length > 0 ? products : getDemoProducts()
+  const displayChannels = channels.length > 0 ? channels : getDemoChannels()
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -83,7 +143,7 @@ export default function SalesIntelligence() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {mockProducts.map((product, index) => (
+               {displayProducts.map((product, index) => (
                 <tr key={product.name} className="hover:bg-gray-50 transition-colors">
                   <td className="py-4 px-4 text-gray-400 text-sm">{index + 1}</td>
                   <td className="py-4 px-4 font-medium text-gray-900">{product.name}</td>
@@ -141,14 +201,14 @@ export default function SalesIntelligence() {
 
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Velocity Chart</h2>
-          <VelocityChart data={mockProducts} />
+           <VelocityChart data={displayProducts} />
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Acquisition Channel Breakdown</h2>
-          <ChannelChart data={mockChannels} />
+          <ChannelChart data={displayChannels} />
         </div>
 
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">

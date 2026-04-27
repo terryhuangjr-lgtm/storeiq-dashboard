@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react'
 import { Crown, TrendingUp, AlertTriangle, Users, ArrowUp, ArrowDown } from 'lucide-react'
 import { RFMSegment } from '../lib/types'
+import { supabase, isDemoMode } from '../lib/supabase'
 
 const mockSegments: RFMSegment[] = [
   {
@@ -103,6 +105,69 @@ const getSegmentColor = (segment: string) => {
 }
 
 export default function CustomerInsights() {
+  const [segments, setSegments] = useState<RFMSegment[]>(mockSegments)
+  const [customers, setCustomers] = useState<any[]>(mockTopCustomers)
+  const [cohortData, setCohortData] = useState<{ month: string; new: number; returning: number }[]>(mockCohortData)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data: storeData, error: storeError } = await supabase
+          .from('stores').select('id').limit(1).single()
+        if (storeError) throw storeError
+        const currentStoreId = storeData?.id
+
+        // Fetch customer segments
+        const { data: segmentsData } = await supabase
+          .from('customer_segments')
+          .select('*')
+          .eq('store_id', currentStoreId)
+          .order('avg_ltv', { ascending: false })
+
+        if (segmentsData && segmentsData.length > 0) {
+          setSegments(segmentsData)
+        }
+
+        // Fetch customers
+        const { data: customersData } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('store_id', currentStoreId)
+          .order('lifetime_value', { ascending: false })
+          .limit(5)
+
+        if (customersData && customersData.length > 0) {
+          setCustomers(customersData)
+        }
+
+        // Fetch cohort data
+        const { data: cohortData } = await supabase
+          .from('cohort_data')
+          .select('*')
+          .eq('store_id', currentStoreId)
+          .order('month')
+
+        if (cohortData && cohortData.length > 0) {
+          setCohortData(cohortData)
+        }
+      } catch (err: any) {
+        console.error('Error fetching data:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -208,7 +273,7 @@ export default function CustomerInsights() {
           <div className="text-center">
             <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
             <p>Interactive cohort chart visualization</p>
-            <p className="text-sm mt-2">New vs Returning customers by month</p>
+            <p className="text-sm mt-2">New vs Returning customers by month ({cohortData.length} months)</p>
           </div>
         </div>
       </div>
