@@ -147,13 +147,13 @@ export default function Overview() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard title="Today's Revenue" value={`$${metrics.revenue_today.toLocaleString()}`}
-          trend={{ value: 12, isUp: true }} prefix="$"
+          trend={{ value: 12, isUp: true }} prefix=""
           icon={<TrendingUp className="w-6 h-6 text-primary" />} />
         <MetricCard title="Orders Today" value={metrics.orders_today}
           trend={{ value: 8, isUp: true }} prefix=""
           icon={<Package className="w-6 h-6 text-primary" />} />
-        <MetricCard title="Avg Order Value" value={metrics.avg_order_value}
-          trend={{ value: 5, isUp: true }} prefix="$"
+        <MetricCard title="Avg Order Value" value={`$${Number(metrics.avg_order_value).toFixed(2)}`}
+          trend={{ value: 5, isUp: true }} prefix=""
           icon={<TrendingUp className="w-6 h-6 text-primary" />} />
         <MetricCard title="Active Alerts" value={activeAlerts.length}
           trend={{ value: 3, isUp: false }} prefix=""
