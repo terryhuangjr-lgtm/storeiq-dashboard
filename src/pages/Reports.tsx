@@ -110,6 +110,16 @@ export default function Reports() {
     return labels[type]
   }
 
+  // Clean report formatting
+  const formatReportContent = (text: string) => {
+    return text
+      .replace(/===/g, '---')
+      .replace(/---/g, '---')
+      .replace(/\\n\\n/g, '</p><p className="mt-2"> ')
+      .replace(/\\n/g, '<br />')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -162,10 +172,8 @@ export default function Reports() {
                 </button>
               </div>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[60vh]">
-              <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono leading-relaxed">
-                {selectedReport.content}
-              </pre>
+            <div className="p-6 overflow-y-auto max-h-[60vh] bg-gray-50/50 rounded-lg text-sm">
+              <div className="prose prose-sm max-w-none space-y-3" dangerouslySetInnerHTML={{__html: formatReportContent(selectedReport.content)}} />
             </div>
           </div>
         </div>

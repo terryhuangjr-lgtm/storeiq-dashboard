@@ -205,8 +205,8 @@ export default function InventoryAlerts() {
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-500">Product</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-500">Variant</th>
                 <th className="text-center py-3 px-4 text-sm font-semibold text-gray-500">Stock</th>
-                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-500">Days Left</th>
-                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-500">Reorder Qty</th>
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-gray-500">Days Left</th>
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-gray-500">Days Remaining</th>
                 <th className="text-center py-3 px-4 text-sm font-semibold text-gray-500">Action</th>
               </tr>
             </thead>
@@ -229,7 +229,7 @@ export default function InventoryAlerts() {
                       </span>
                     )}
                   </td>
-                  <td className="py-4 px-4 font-medium text-gray-900">{item.product_name || item.product}</td>
+                  <td className="py-4 px-4 font-medium text-gray-900">{item.product_name || item.product || "Unknown Product"}</td>
                   <td className="py-4 px-4 text-gray-600">{item.variant || '-'}</td>
                   <td className="py-4 px-4 text-center font-medium text-gray-900">{item.value || item.stock}</td>
                   <td className="py-4 px-4 text-center">
@@ -243,7 +243,28 @@ export default function InventoryAlerts() {
                       {item.daysRemaining || '-'} days
                     </span>
                   </td>
-                  <td className="py-4 px-4 text-center font-medium text-gray-900">{item.reorderQty || '-'}</td>
+                  <td className="py-4 px-4 text-center">
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold ${
+                      (item.daysRemaining || 0) < 14
+                        ? 'bg-danger/10 text-danger'
+                        : (item.daysRemaining || 0) < 30
+                        ? 'bg-warning/10 text-warning'
+                        : 'bg-success/10 text-success'
+                    }`}>
+                      {item.daysRemaining || 'N/A'}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold ${
+                      (item.reorderQty || 0) < 50
+                        ? 'bg-danger/10 text-danger'
+                        : (item.reorderQty || 0) < 100
+                        ? 'bg-warning/10 text-warning'
+                        : 'bg-success/10 text-success'
+                    }`}>
+                      {item.reorderQty || 'N/A'}
+                    </span>
+                  </td>
                   <td className="py-4 px-4 text-center">
                     <button className="px-4 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium hover:bg-primary/20 transition-colors">
                       Create PO
