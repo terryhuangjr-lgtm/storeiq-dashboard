@@ -16,22 +16,62 @@ const VelocityChart = ({ data }: VelocityChartProps) => {
     }
   }
 
+  const getChangeColor = (change: number) => {
+    return change >= 0 ? '#10B981' : '#EF4444'
+  }
+
+  const getChangeIcon = (change: number) => {
+    return change >= 0 ? '▲' : '▼'
+  }
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const change = payload[0].payload.changePercent || 0
       return (
         <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-100">
           <p className="font-medium text-gray-900 mb-2">{label}</p>
           <p className="text-gray-600 text-sm">Units: {payload[0].value}</p>
+          <p className="text-sm" style={{ color: getChangeColor(change) }}>
+            {getChangeIcon(change)} {Math.abs(change)}% vs prev period
+          </p>
         </div>
       )
     }
     return null
   }
 
+  const CustomBar = ({ x, y, width, height, payload }: any) => {
+    const changeColor = getChangeColor(payload.changePercent || 0)
+    return (
+      <g>
+        <rect
+          x={x}
+          y={y}
+          width={width}
+          height={height}
+          rx={4}
+          ry={4}
+          fill={getPatternColor(payload.pattern)}
+        />
+        {payload.changePercent !== undefined && (
+          <text
+            x={x + width / 2}
+            y={y - 6}
+            textAnchor="middle"
+            fontSize={10}
+            fill={changeColor}
+          >
+            {getChangeIcon(payload.changePercent)} {Math.abs(payload.changePercent)}%
+          </text>
+        )}
+      </g>
+    )
+  }
+
   return (
     <div className="h-80 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+        <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
           <XAxis 
             dataKey="name" 
@@ -49,16 +89,8 @@ const VelocityChart = ({ data }: VelocityChartProps) => {
           <Tooltip content={<CustomTooltip />} />
           <Bar 
             dataKey="unitsSold" 
-            radius={[4, 4, 0, 0]}
-          >
-            {data.map((entry, index) => (
-              <Bar 
-                key={`bar-${index}`}
-                dataKey="unitsSold"
-                fill={getPatternColor(entry.pattern)}
-              />
-            ))}
-          </Bar>
+            shape={<CustomBar />}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>
