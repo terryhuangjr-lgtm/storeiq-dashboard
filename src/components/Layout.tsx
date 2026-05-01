@@ -7,6 +7,7 @@ import StoreSelector from './StoreSelector'
 
 export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [alertCount, setAlertCount] = useState(0)
   const location = useLocation()
   const navigate = useNavigate()
   const { session, signOut } = useAuth()
@@ -19,10 +20,31 @@ export default function Layout() {
     }
   }, [session, navigate])
 
+  // Live alert badge count
+  useEffect(() => {
+    const fetchAlertCount = async () => {
+      try {
+        const { data: storeData } = await supabase
+          .from('stores').select('id').limit(1).single()
+        const storeId = storeData?.id || '00000000-0000-0000-0000-000000000001'
+        const { count } = await supabase
+          .from('alerts').select('*', { count: 'exact', head: true })
+          .eq('store_id', storeId).eq('is_resolved', false)
+        if (count !== null) setAlertCount(count)
+      } catch (err) {
+        // Silently fall back — badge won't show
+      }
+    }
+    fetchAlertCount()
+    // Refresh count every 60 seconds
+    const interval = setInterval(fetchAlertCount, 60000)
+    return () => clearInterval(interval)
+  }, [])
+
   const navItems = [
     { icon: LayoutDashboard, label: 'Overview', to: '/overview' },
     { icon: TrendingUp, label: 'Sales Intelligence', to: '/sales' },
-    { icon: AlertCircle, label: 'Inventory Alerts', to: '/inventory', badge: 5 },
+    { icon: AlertCircle, label: 'Inventory Alerts', to: '/inventory', badge: alertCount },
     { icon: Users, label: 'Customer Insights', to: '/customers' },
     { icon: FileText, label: 'All Reports', to: '/reports' },
     { icon: LogOut, label: 'Agent Activity Log', to: '/activity' },
