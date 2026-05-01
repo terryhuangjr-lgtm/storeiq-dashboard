@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Mail } from 'lucide-react'
+import { Mail, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { seedDemoData } from '../lib/seedDemoData'
 
@@ -9,6 +9,7 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -43,6 +44,11 @@ export default function Login() {
     }
   }
 
+  const continueAsDemo = () => {
+    localStorage.setItem('storeiq_demo', 'true')
+    navigate('/overview')
+  }
+
   return (
     <div className="min-h-screen bg-sidebar flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -75,15 +81,24 @@ export default function Login() {
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                placeholder="Enter your password"
-                required
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all pr-10"
+                  placeholder="Enter your password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             {error && (
@@ -101,7 +116,16 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-gray-100">
+          <div className="mt-4">
+            <button
+              onClick={continueAsDemo}
+              className="w-full text-secondary hover:text-primary transition-colors text-sm font-medium py-2"
+            >
+              Continue as Demo →
+            </button>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-gray-100">
             <button
               onClick={handleSeedData}
               className="w-full text-secondary hover:text-primary transition-colors text-sm"

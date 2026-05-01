@@ -25,7 +25,7 @@ function App() {
             <Route path="/customers" element={<CustomerInsights />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/activity" element={<ActivityLog />} />
-            <Route path="/" element={<Navigate to="/overview" replace />} />
+            <Route path="/" element={<Navigate to="/login" replace />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/overview" replace />} />

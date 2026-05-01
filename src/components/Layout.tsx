@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useLocation, Link, Outlet } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useLocation, Link, Outlet, useNavigate } from 'react-router-dom'
 import { Store, LayoutDashboard, TrendingUp, AlertCircle, Users, FileText, Settings, LogOut, Menu, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
@@ -8,7 +8,16 @@ import StoreSelector from './StoreSelector'
 export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
   const { session, signOut } = useAuth()
+
+  // Auth guard: redirect to login if no session and not in demo mode
+  useEffect(() => {
+    const isDemo = localStorage.getItem('storeiq_demo') === 'true'
+    if (!session && !isDemo) {
+      navigate('/login', { replace: true })
+    }
+  }, [session, navigate])
 
   const navItems = [
     { icon: LayoutDashboard, label: 'Overview', to: '/overview' },
