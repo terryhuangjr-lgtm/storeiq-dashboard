@@ -128,7 +128,7 @@ export default function Overview() {
 
       const { data: alertsData } = await supabase
         .from('alerts').select('*').eq('store_id', currentStoreId)
-        .eq('is_resolved', false).order('created_at', { ascending: false })
+        .eq('is_acknowledged', false).order('created_at', { ascending: false })
       if (alertsData) setAlerts(alertsData)
 
       const { data: activityData } = await supabase
@@ -195,10 +195,21 @@ export default function Overview() {
     setIsSyncing(false)
   }
 
-  const resolveAlert = (id: string) => {
-    setAlerts(alerts.map(a => a.id === id ? { ...a, is_resolved: true } : a))
+  const acknowledgeAlert = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('alerts')
+        .update({ is_acknowledged: true })
+        .eq('id', id)
+      if (!error) {
+        setAlerts(alerts.filter(a => a.id !== id))
+      }
+    } catch (err) {
+      // Fallback: just remove from local state
+      setAlerts(alerts.filter(a => a.id !== id))
+    }
   }
-  const activeAlerts = alerts.filter(a => !a.is_resolved)
+  const activeAlerts = alerts.filter(a => !a.is_acknowledged)
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">
@@ -281,9 +292,9 @@ export default function Overview() {
                       {alert.product_name && <span className="text-sm text-gray-500">({alert.product_name})</span>}
                     </div>
                     <p className="text-gray-600 text-sm mb-3">{alert.description}</p>
-                    <button onClick={() => resolveAlert(alert.id)}
+                    <button onClick={() => acknowledgeAlert(alert.id)}
                       className="text-primary text-sm font-medium hover:underline">
-                      Mark Resolved
+                      Seen
                     </button>
                   </div>
                 </div>
