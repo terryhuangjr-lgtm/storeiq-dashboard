@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
-import { ArrowUp, ArrowDown, AlertCircle, TrendingUp, Package, RefreshCw } from 'lucide-react'
+import { ArrowUp, ArrowDown, AlertCircle, TrendingUp, Package, RefreshCw, Database, Cloud } from 'lucide-react'
 import MetricCard from '../components/MetricCard'
 import RevenueChart from '../components/Charts/RevenueChart'
 import AlertBadge from '../components/AlertBadge'
 import { ActivityLog } from '../lib/types'
 import ActivityFeed from '../components/ActivityFeed'
 import { supabase, isDemoMode } from '../lib/supabase'
+
+const SYNC_API = 'https://jettmissioncontrol.com/api/storeiq-sync'
 
 export default function Overview() {
   const [metrics, setMetrics] = useState({
@@ -25,7 +27,9 @@ export default function Overview() {
   const [alerts, setAlerts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isSyncing, setIsSyncing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
   const [storeId, setStoreId] = useState<string>('')
 
   // Generate random demo metrics with slight variance
@@ -169,6 +173,28 @@ export default function Overview() {
     setIsRefreshing(false)
   }
 
+  const handleSync = async () => {
+    setIsSyncing(true)
+    setSyncMessage('Syncing from Shopify...')
+    try {
+      const res = await fetch(SYNC_API, { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        setSyncMessage('Sync complete! Refreshing data...')
+        await fetchData()
+        setSyncMessage('Data updated!')
+        setTimeout(() => setSyncMessage(null), 3000)
+      } else {
+        setSyncMessage(`Sync failed: ${data.error}`)
+        setTimeout(() => setSyncMessage(null), 5000)
+      }
+    } catch (err: any) {
+      setSyncMessage(`Connection error: ${err.message}`)
+      setTimeout(() => setSyncMessage(null), 5000)
+    }
+    setIsSyncing(false)
+  }
+
   const resolveAlert = (id: string) => {
     setAlerts(alerts.map(a => a.id === id ? { ...a, is_resolved: true } : a))
   }
@@ -182,24 +208,36 @@ export default function Overview() {
 
   return (
     <div className="space-y-6">
-      {/* Header with Refresh */}
+      {/* Header with Refresh + Sync */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
           <p className="text-gray-500 text-sm mt-1">
-            {lastUpdated 
-              ? `Last updated: Today at ${lastUpdated}`
-              : 'Loading data...'}
+            {syncMessage ? (
+              <span className="text-primary font-medium">{syncMessage}</span>
+            ) : lastUpdated ? (
+              `Last updated: Today at ${lastUpdated}`
+            ) : 'Loading data...'}
           </p>
         </div>
-        <button
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
-        >
-          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {isRefreshing ? 'Refreshing...' : 'Refresh'}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleSync}
+            disabled={isSyncing}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+          >
+            <Database className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Syncing...' : 'Sync Now'}
+          </button>
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing || isSyncing}
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
