@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertCircle, AlertTriangle, Package, TrendingDown, ShoppingCart } from 'lucide-react'
+import { AlertCircle, AlertTriangle, Package, TrendingDown, ShoppingCart, CheckCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 interface AlertData {
@@ -9,7 +9,9 @@ interface AlertData {
   title: string
   description: string
   product_name: string
+  variant: string | null
   value: number
+  is_acknowledged: boolean
   is_resolved: boolean
   created_at: string
 }
@@ -19,6 +21,7 @@ export default function InventoryAlerts() {
   const [alerts, setAlerts] = useState<AlertData[]>([])
   const [loading, setLoading] = useState(true)
   const [lastScan, setLastScan] = useState<string>('')
+  const [acknowledging, setAcknowledging] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchAlerts = async () => {
@@ -29,11 +32,10 @@ export default function InventoryAlerts() {
 
         const { data: alertsData } = await supabase
           .from('alerts').select('*').eq('store_id', currentStoreId)
-          .eq('is_resolved', false).order('severity', { ascending: false })
+          .eq('is_acknowledged', false).order('severity', { ascending: false })
 
         if (alertsData && alertsData.length > 0) {
           setAlerts(alertsData)
-          // Get last scan time from most recent alert
           const times = alertsData.map(a => a.created_at).filter(Boolean).sort().reverse()
           if (times.length > 0) {
             const d = new Date(times[0])
@@ -42,6 +44,8 @@ export default function InventoryAlerts() {
               hour: 'numeric', minute: '2-digit'
             }))
           }
+        } else {
+          setAlerts([])
         }
         setLoading(false)
       } catch (err: any) {
@@ -51,6 +55,34 @@ export default function InventoryAlerts() {
     }
     fetchAlerts()
   }, [])
+
+  const handleAcknowledge = async (alertId: string) => {
+    setAcknowledging(alertId)
+    try {
+      const { error } = await supabase
+        .from('alerts')
+        .update({ is_acknowledged: true })
+        .eq('id', alertId)
+      
+      if (error) {
+        console.error('Error acknowledging alert:', error.message)
+        return
+      }
+      
+      setAlerts(prev => prev.filter(a => a.id !== alertId))
+    } catch (err: any) {
+      console.error('Error acknowledging alert:', err.message)
+    } finally {
+      setAcknowledging(null)
+    }
+  }
+
+  const handleAcknowledgeAll = async () => {
+    const unacked = stockoutAlerts.filter(a => filter === 'all' || a.severity === filter)
+    for (const alert of unacked) {
+      await handleAcknowledge(alert.id)
+    }
+  }
 
   // Separate stockout/dead/overstock
   const stockoutAlerts = alerts.filter(a => a.alert_type === 'stockout_risk')
@@ -155,6 +187,14 @@ export default function InventoryAlerts() {
             <p className="text-sm text-gray-500 mt-1">Products running low — calculated from real sales velocity</p>
           </div>
           <div className="flex items-center gap-2">
+            {filteredStockout.length > 0 && (
+              <button
+                onClick={handleAcknowledgeAll}
+                className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Acknowledge All
+              </button>
+            )}
             <span className="text-sm text-gray-500">Filter:</span>
             <select
               value={filter}
@@ -175,16 +215,17 @@ export default function InventoryAlerts() {
               <tr className="border-b border-gray-100">
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-500">Severity</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-500">Product</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-500">Variant</th>
                 <th className="text-center py-3 px-4 text-sm font-semibold text-gray-500">In Stock</th>
                 <th className="text-center py-3 px-4 text-sm font-semibold text-gray-500">Days Left</th>
                 <th className="text-center py-3 px-4 text-sm font-semibold text-gray-500">Reorder Qty</th>
-                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-500">Suggested Action</th>
+                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-500" colSpan={2}>Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredStockout.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-gray-400">
+                  <td colSpan={8} className="py-8 text-center text-gray-400">
                     No {filter !== 'all' ? filter + ' ' : ''}reorder alerts right now
                   </td>
                 </tr>
@@ -206,6 +247,15 @@ export default function InventoryAlerts() {
                     <td className="py-4 px-4">
                       <div className="font-medium text-gray-900">{item.product_name}</div>
                       <div className="text-xs text-gray-400 mt-0.5">{item.title}</div>
+                    </td>
+                    <td className="py-4 px-4">
+                      {item.variant ? (
+                        <span className="inline-block px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-md">
+                          {item.variant}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">—</span>
+                      )}
                     </td>
                     <td className="py-4 px-4 text-center">
                       <span className={`font-bold text-lg ${
@@ -254,6 +304,16 @@ export default function InventoryAlerts() {
                         Order {reorderQty || '?'} units
                       </span>
                     </td>
+                    <td className="py-4 px-2 text-center">
+                      <button
+                        onClick={() => handleAcknowledge(item.id)}
+                        disabled={acknowledging === item.id}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        {acknowledging === item.id ? '...' : 'Seen'}
+                      </button>
+                    </td>
                   </tr>
                 )
               })}
@@ -272,15 +332,26 @@ export default function InventoryAlerts() {
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="text-left py-3 px-4 text-sm font-semibold text-gray-500">Product</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-500">Variant</th>
                   <th className="text-center py-3 px-4 text-sm font-semibold text-gray-500">Units</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-gray-500">Issue</th>
                   <th className="text-center py-3 px-4 text-sm font-semibold text-gray-500">Suggested Action</th>
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-gray-500"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {deadAlerts.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                     <td className="py-4 px-4 font-medium text-gray-900">{item.product_name}</td>
+                    <td className="py-4 px-4">
+                      {item.variant ? (
+                        <span className="inline-block px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-md">
+                          {item.variant}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">—</span>
+                      )}
+                    </td>
                     <td className="py-4 px-4 text-center">
                       <span className="font-bold text-lg text-gray-900">{item.value}</span>
                     </td>
@@ -299,6 +370,16 @@ export default function InventoryAlerts() {
                       }`}>
                         {item.alert_type === 'dead_inventory' ? 'Flash Sale' : 'Promo / Bundle'}
                       </span>
+                    </td>
+                    <td className="py-4 px-2 text-center">
+                      <button
+                        onClick={() => handleAcknowledge(item.id)}
+                        disabled={acknowledging === item.id}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        {acknowledging === item.id ? '...' : 'Seen'}
+                      </button>
                     </td>
                   </tr>
                 ))}

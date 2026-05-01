@@ -29,7 +29,7 @@ export default function Layout() {
         const storeId = storeData?.id || '00000000-0000-0000-0000-000000000001'
         const { count } = await supabase
           .from('alerts').select('*', { count: 'exact', head: true })
-          .eq('store_id', storeId).eq('is_resolved', false)
+          .eq('store_id', storeId).eq('is_acknowledged', false)
         if (count !== null) setAlertCount(count)
       } catch (err) {
         // Silently fall back — badge won't show
