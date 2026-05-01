@@ -130,35 +130,10 @@ export default function Layout() {
           </div>
         </header>
 
-        {/* Desktop Header */}
-        <header className="hidden lg:flex items-center justify-between p-6 bg-white border-b border-gray-200">
-          <Header />
-        </header>
-
         {/* Page Content */}
-        <main className="flex-1 overflow-auto bg-background">
+        <main className="flex-1 overflow-auto bg-background p-6">
           <Outlet />
         </main>
-      </div>
-    </div>
-  )
-}
-
-function Header() {
-  return (
-    <div className="flex-1">
-      <div className="flex items-center gap-3 mb-2">
-        <h1 className="text-2xl font-bold text-text">Good morning, Superare</h1>
-        <span className="px-3 py-1 bg-success/10 text-success text-sm font-medium rounded-full">
-          Live
-        </span>
-      </div>
-      <div className="flex items-center gap-6 text-sm text-secondary">
-        <span>Last updated: Today at 2:30 PM</span>
-        <span className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-          Hermes last ran: 15 minutes ago
-        </span>
       </div>
     </div>
   )
