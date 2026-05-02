@@ -42,7 +42,13 @@ export default function SalesIntelligence() {
           .order('units_sold', { ascending: false })
 
         if (productsData && productsData.length > 0) {
-          setProducts(productsData)
+          setProducts(productsData.map(p => ({
+            name: p.name,
+            unitsSold: p.units_sold || 0,
+            revenue: p.revenue || 0,
+            trend: p.trend || 0,
+            pattern: p.pattern || 'STABLE'
+          })))
         } else if (isDemoMode) {
           setProducts(getDemoProducts())
         }
@@ -55,7 +61,11 @@ export default function SalesIntelligence() {
           .order('revenue', { ascending: false })
 
         if (channelsData && channelsData.length > 0) {
-          setChannels(channelsData)
+          setChannels(channelsData.map(c => ({
+            channel: c.channel,
+            revenue: c.revenue || 0,
+            percentage: c.percentage || 0
+          })))
         } else if (isDemoMode) {
           setChannels(getDemoChannels())
         }
