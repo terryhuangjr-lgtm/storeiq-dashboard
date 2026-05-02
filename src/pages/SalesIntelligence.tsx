@@ -28,17 +28,22 @@ export default function SalesIntelligence() {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true)
       try {
         const { data: storeData, error: storeError } = await supabase
           .from('stores').select('id').limit(1).single()
         if (storeError) throw storeError
         const currentStoreId = storeData?.id
 
-        // Fetch product performance
+        // Map dateRange value to period filter label
+        const periodLabel = `${dateRange}d`
+
+        // Fetch product performance filtered by period
         const { data: productsData } = await supabase
           .from('product_performance')
           .select('*')
           .eq('store_id', currentStoreId)
+          .eq('period', periodLabel)
           .order('units_sold', { ascending: false })
 
         if (productsData && productsData.length > 0) {
@@ -80,7 +85,7 @@ export default function SalesIntelligence() {
       }
     }
     fetchData()
-  }, [])
+  }, [dateRange])
 
   const getDemoProducts = (): ProductPerformance[] => [
     { name: 'Supergel V Gloves', unitsSold: 1247, revenue: 149640, trend: 23, pattern: 'BESTSELLER' },
@@ -131,6 +136,7 @@ export default function SalesIntelligence() {
             onChange={(e) => setDateRange(e.target.value)}
             className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
           >
+            <option value="7">Last 7 Days</option>
             <option value="30">Last 30 Days</option>
             <option value="60">Last 60 Days</option>
             <option value="90">Last 90 Days</option>
