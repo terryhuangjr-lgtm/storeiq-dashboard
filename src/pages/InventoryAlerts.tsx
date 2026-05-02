@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertCircle, AlertTriangle, Package, TrendingDown, ShoppingCart, CheckCircle } from 'lucide-react'
+import { AlertCircle, AlertTriangle, Package, TrendingDown, ShoppingCart, CheckCircle, Search, Filter, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 interface AlertData {
@@ -133,79 +133,81 @@ export default function InventoryAlerts() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-critical/10 rounded-xl p-4 border border-critical/20">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-critical/20 rounded-lg flex items-center justify-center">
+        <div className="bg-critical/10 rounded-xl p-5 border border-critical/20 hover:bg-critical/15 transition-colors">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 bg-critical/20 rounded-xl flex items-center justify-center">
               <AlertCircle className="w-5 h-5 text-critical" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-critical">{summary.critical}</p>
-              <p className="text-sm text-gray-500">CRITICAL stock</p>
+              <p className="text-2xl font-bold text-critical tabular-nums">{summary.critical}</p>
+              <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Critical</p>
             </div>
           </div>
         </div>
-        <div className="bg-danger/10 rounded-xl p-4 border border-danger/20">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-danger/20 rounded-lg flex items-center justify-center">
+        <div className="bg-danger/10 rounded-xl p-5 border border-danger/20 hover:bg-danger/15 transition-colors">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 bg-danger/20 rounded-xl flex items-center justify-center">
               <AlertTriangle className="w-5 h-5 text-danger" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-danger">{summary.high}</p>
-              <p className="text-sm text-gray-500">HIGH priority</p>
+              <p className="text-2xl font-bold text-danger tabular-nums">{summary.high}</p>
+              <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">High</p>
             </div>
           </div>
         </div>
-        <div className="bg-warning/10 rounded-xl p-4 border border-warning/20">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-warning/20 rounded-lg flex items-center justify-center">
+        <div className="bg-warning/10 rounded-xl p-5 border border-warning/20 hover:bg-warning/15 transition-colors">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 bg-warning/20 rounded-xl flex items-center justify-center">
               <AlertTriangle className="w-5 h-5 text-warning" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-warning">{summary.medium}</p>
-              <p className="text-sm text-gray-500">MEDIUM priority</p>
+              <p className="text-2xl font-bold text-warning tabular-nums">{summary.medium}</p>
+              <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Medium</p>
             </div>
           </div>
         </div>
-        <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+        <div className="bg-purple-50 rounded-xl p-5 border border-purple-200 hover:bg-purple-100/50 transition-colors">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 bg-purple-100 rounded-xl flex items-center justify-center">
               <TrendingDown className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-purple-700">{summary.dead}</p>
-              <p className="text-sm text-gray-500">Dead / Overstock</p>
+              <p className="text-2xl font-bold text-purple-700 tabular-nums">{summary.dead}</p>
+              <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Dead / Overstock</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Reorder Alerts Table */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-6 pt-6 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Reorder Recommendations</h2>
-            <p className="text-sm text-gray-500 mt-1">Products running low — calculated from real sales velocity</p>
+            <p className="text-sm text-gray-400 mt-1">Products running low — calculated from real sales velocity</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {filteredStockout.length > 0 && (
               <button
                 onClick={handleAcknowledgeAll}
-                className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="px-3.5 py-2 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
               >
                 Acknowledge All
               </button>
             )}
-            <span className="text-sm text-gray-500">Filter:</span>
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as any)}
-              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
-            >
-              <option value="all">All Status</option>
-              <option value="critical">Critical</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-            </select>
+            <div className="relative">
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value as any)}
+                className="appearance-none pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer hover:border-gray-300"
+              >
+                <option value="all">All Status</option>
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
           </div>
         </div>
 

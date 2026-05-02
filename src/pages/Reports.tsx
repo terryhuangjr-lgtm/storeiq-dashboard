@@ -150,9 +150,9 @@ export default function Reports() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Reports Archive</h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 mt-1">
             {syncMessage ? (
-              <span className="text-primary font-medium">{syncMessage}</span>
+              <span className="text-primary font-semibold">{syncMessage}</span>
             ) : (
               'Real-time reports generated from your Shopify data'
             )}
@@ -161,7 +161,7 @@ export default function Reports() {
         <button
           onClick={handleSync}
           disabled={syncing}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm text-sm font-semibold"
         >
           <Database className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
           {syncing ? 'Generating...' : 'Sync & Generate Reports'}
@@ -179,14 +179,16 @@ export default function Reports() {
           />
         ))}
         {reports.length === 0 && (
-          <div className="col-span-full text-center py-16">
-            <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-500 mb-2">No reports yet</h3>
-            <p className="text-gray-400 mb-6">Click "Sync & Generate Reports" to pull live data from Shopify</p>
+          <div className="col-span-full flex flex-col items-center justify-center py-20">
+            <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+              <FileText className="w-8 h-8 text-gray-300" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-400 mb-2">No reports yet</h3>
+            <p className="text-sm text-gray-400 mb-6 max-w-sm text-center">Click "Sync & Generate Reports" to pull live data from Shopify and generate your first report</p>
             <button
               onClick={handleSync}
               disabled={syncing}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm text-sm font-semibold"
             >
               <Database className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
               {syncing ? 'Generating...' : 'Sync & Generate Reports'}
@@ -197,34 +199,41 @@ export default function Reports() {
 
       {/* Report Detail Modal */}
       {selectedReport && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {getReportTypeLabel(selectedReport.report_type)}
-                </h2>
-                <p className="text-gray-500 mt-1">
-                  Generated: {new Date(selectedReport.generated_at).toLocaleString()}
-                </p>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedReport(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-lg">
+                  {reportTypeEmojis[selectedReport.report_type]}
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">
+                    {getReportTypeLabel(selectedReport.report_type)}
+                  </h2>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Generated {new Date(selectedReport.generated_at).toLocaleString('en-US', {
+                      month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
+                    })}
+                  </p>
+                </div>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => handleDownload(selectedReport)}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors text-sm font-medium"
                 >
                   <Download className="w-4 h-4" />
                   Download
                 </button>
                 <button
                   onClick={() => setSelectedReport(null)}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors text-sm font-medium"
                 >
                   Close
                 </button>
               </div>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[60vh]">
+            <div className="p-6 overflow-y-auto max-h-[65vh]">
               <div
                 className="prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{ __html: formatReportContent(selectedReport.content) }}

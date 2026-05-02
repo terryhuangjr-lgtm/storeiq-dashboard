@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import { ArrowUp, ArrowDown, AlertCircle, TrendingUp, Package, RefreshCw, Database, Cloud } from 'lucide-react'
+import { ArrowUp, ArrowDown, AlertCircle, TrendingUp, Package, RefreshCw, Database, CheckCircle, ArrowRight, Activity } from 'lucide-react'
 import MetricCard from '../components/MetricCard'
 import RevenueChart from '../components/Charts/RevenueChart'
 import AlertBadge from '../components/AlertBadge'
 import { ActivityLog } from '../lib/types'
 import ActivityFeed from '../components/ActivityFeed'
+import { Link } from 'react-router-dom'
 import { supabase, isDemoMode } from '../lib/supabase'
 
 const SYNC_API = 'https://jettmissioncontrol.com/api/storeiq-sync'
@@ -220,22 +221,33 @@ export default function Overview() {
   return (
     <div className="space-y-6">
       {/* Header with Refresh + Sync */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-gray-500 text-sm mt-1.5">
             {syncMessage ? (
-              <span className="text-primary font-medium">{syncMessage}</span>
+              <span className="inline-flex items-center gap-1.5 text-primary font-medium">
+                <Database className="w-3.5 h-3.5 animate-pulse" />
+                {syncMessage}
+              </span>
             ) : lastUpdated ? (
-              `Last updated: Today at ${lastUpdated}`
-            ) : 'Loading data...'}
+              <span className="inline-flex items-center gap-1.5 text-gray-400">
+                <span className="w-1.5 h-1.5 bg-success rounded-full" />
+                Last updated: Today at {lastUpdated}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 text-gray-400">
+                <span className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-pulse" />
+                Loading data...
+              </span>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={handleSync}
             disabled={isSyncing}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm text-sm font-medium"
           >
             <Database className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
             {isSyncing ? 'Syncing...' : 'Sync Now'}
@@ -243,7 +255,7 @@ export default function Overview() {
           <button
             onClick={handleRefresh}
             disabled={isRefreshing || isSyncing}
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 active:bg-primary/80 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm text-sm font-medium"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             {isRefreshing ? 'Refreshing...' : 'Refresh'}
@@ -267,10 +279,10 @@ export default function Overview() {
       </div>
 
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-5">
           <h2 className="text-xl font-bold text-gray-900">Revenue Last 30 Days</h2>
           {lastUpdated && (
-            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
+            <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full">
               Refreshed {lastUpdated}
             </span>
           )}
@@ -281,35 +293,64 @@ export default function Overview() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Active Alerts</h2>
-            <div className="space-y-4">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xl font-bold text-gray-900">Active Alerts</h2>
+              {activeAlerts.length > 0 && (
+                <span className="text-xs font-medium text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+                  {activeAlerts.length} active
+                </span>
+              )}
+            </div>
+            <div className="space-y-3">
               {activeAlerts.map(alert => (
-                <div key={alert.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+                <div key={alert.id} className="group flex items-start gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
                   <AlertBadge severity={alert.severity} />
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-gray-900">{alert.title}</h3>
-                      {alert.product_name && <span className="text-sm text-gray-500">({alert.product_name})</span>}
+                      <h3 className="font-semibold text-gray-900 text-sm">{alert.title}</h3>
+                      {alert.product_name && <span className="text-xs text-gray-400 truncate">({alert.product_name})</span>}
                     </div>
-                    <p className="text-gray-600 text-sm mb-3">{alert.description}</p>
+                    <p className="text-gray-500 text-sm mb-2">{alert.description}</p>
                     <button onClick={() => acknowledgeAlert(alert.id)}
-                      className="text-primary text-sm font-medium hover:underline">
-                      Seen
+                      className="text-primary text-xs font-medium hover:text-primary/80 transition-colors">
+                      Dismiss →
                     </button>
                   </div>
                 </div>
               ))}
-              {activeAlerts.length === 0 && <p className="text-gray-500 text-center py-8">No active alerts</p>}
+              {activeAlerts.length === 0 && (
+                <div className="text-center py-10">
+                  <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <CheckCircle className="w-6 h-6 text-success" />
+                  </div>
+                  <p className="text-gray-500 text-sm font-medium">No active alerts</p>
+                  <p className="text-gray-400 text-xs mt-1">Everything looks good</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
         <div>
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h2>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xl font-bold text-gray-900">Recent Activity</h2>
+            </div>
             <ActivityFeed activities={activities} />
-            <a href="/activity" className="text-primary text-sm font-medium hover:underline mt-4 inline-block">
-              View all activity →
-            </a>
+            {activities.length > 0 && (
+              <Link to="/activity" className="group inline-flex items-center gap-1.5 text-primary text-sm font-medium hover:text-primary/80 transition-colors mt-4">
+                View all activity
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            )}
+            {activities.length === 0 && (
+              <div className="text-center py-10">
+                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                  <Activity className="w-6 h-6 text-gray-400" />
+                </div>
+                <p className="text-gray-500 text-sm font-medium">No activity yet</p>
+                <p className="text-gray-400 text-xs mt-1">Agent actions will appear here</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

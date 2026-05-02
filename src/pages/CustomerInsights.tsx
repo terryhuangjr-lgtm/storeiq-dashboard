@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Crown, TrendingUp, AlertTriangle, Users, ArrowUp, ArrowDown } from 'lucide-react'
+import { Crown, TrendingUp, AlertTriangle, Users, Download, ArrowUp, ArrowDown } from 'lucide-react'
 import { RFMSegment } from '../lib/types'
 import { supabase, isDemoMode } from '../lib/supabase'
 
@@ -176,18 +176,27 @@ export default function CustomerInsights() {
       </div>
 
       {/* At-Risk Alert Box */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-start gap-4">
-        <AlertTriangle className="w-6 h-6 text-warning flex-shrink-0 mt-0.5" />
+      <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-xl p-5 flex items-start gap-4 shadow-sm">
+        <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+          <AlertTriangle className="w-5 h-5 text-warning" />
+        </div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-warning mb-2">⚠️ Customer Churn Risk</h3>
-          <p className="text-gray-700 mb-3">
-            <span className="font-medium">234 customers</span> are showing at-risk behavior — last purchase was 60-90 days ago.
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-base font-semibold text-amber-800">Customer Churn Risk Detected</h3>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+              <AlertTriangle className="w-3 h-3" />
+              High Priority
+            </span>
+          </div>
+          <p className="text-gray-700 mb-2">
+            <span className="font-semibold text-amber-900 tabular-nums">234 customers</span> are showing at-risk behavior — last purchase was 60-90 days ago.
           </p>
-          <p className="text-gray-600 text-sm mb-4">
-            Estimated recoverable revenue: <span className="font-semibold text-warning">$15,420</span>
+          <p className="text-gray-500 text-sm mb-4">
+            Estimated recoverable revenue: <span className="font-semibold text-warning tabular-nums">$15,420</span>
           </p>
-          <button className="px-4 py-2 bg-amber-100 text-amber-800 rounded-lg text-sm font-medium hover:bg-amber-200 transition-colors">
-            Export List
+          <button className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-100 text-amber-700 rounded-xl text-sm font-medium hover:bg-amber-200 transition-colors">
+            <Download className="w-4 h-4" />
+            Export At-Risk List
           </button>
         </div>
       </div>
@@ -195,26 +204,26 @@ export default function CustomerInsights() {
       {/* Segment Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {mockSegments.map((segment) => (
-          <div key={segment.segment} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div key={segment.segment} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all duration-200">
             <div className="flex items-center gap-3 mb-3">
               <div 
-                className="w-3 h-3 rounded-full" 
+                className="w-3 h-3 rounded-full ring-2 ring-offset-1" 
                 style={{ backgroundColor: segment.color }}
               />
-              <span className="font-medium text-gray-900 text-sm">{segment.segment}</span>
+              <span className="font-semibold text-gray-900 text-sm">{segment.segment}</span>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-gray-500 text-sm">Customers</span>
-                <span className="font-semibold text-gray-900">{segment.count.toLocaleString()}</span>
+                <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Customers</span>
+                <span className="font-semibold text-gray-900 tabular-nums">{segment.count.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-500 text-sm">% of Revenue</span>
-                <span className="font-semibold text-gray-900">{segment.revenuePercentage}%</span>
+                <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">% of Revenue</span>
+                <span className="font-semibold text-gray-900 tabular-nums">{segment.revenuePercentage}%</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-500 text-sm">Avg LTV</span>
-                <span className="font-semibold text-gray-900">${segment.avgLTV.toLocaleString()}</span>
+                <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Avg LTV</span>
+                <span className="font-semibold text-gray-900 tabular-nums">${segment.avgLTV.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -222,37 +231,46 @@ export default function CustomerInsights() {
       </div>
 
       {/* Top Customers Table */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Top Customers by Lifetime Value</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-5 border-b border-gray-50">
+          <h2 className="text-lg font-bold text-gray-900">Top Customers by Lifetime Value</h2>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-500">Customer</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-500">Email</th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-500">Total Orders</th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-500">Lifetime Value</th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-500">Last Order</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-500">Segment</th>
+              <tr className="bg-gray-50/50">
+                <th className="text-left py-3 px-5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Customer</th>
+                <th className="text-left py-3 px-5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Email</th>
+                <th className="text-right py-3 px-5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Orders</th>
+                <th className="text-right py-3 px-5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Lifetime Value</th>
+                <th className="text-right py-3 px-5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Last Order</th>
+                <th className="text-left py-3 px-5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Segment</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-50">
               {mockTopCustomers.map((customer, index) => (
-                <tr key={index} className="hover:bg-gray-50 transition-colors">
-                  <td className="py-4 px-4 font-medium text-gray-900">{customer.name}</td>
-                  <td className="py-4 px-4 text-gray-600">{customer.email}</td>
-                  <td className="py-4 px-4 text-right font-medium text-gray-900">{customer.totalOrders}</td>
-                  <td className="py-4 px-4 text-right font-medium text-gray-900">
+                <tr key={index} className="hover:bg-gray-50/80 transition-colors">
+                  <td className="py-3.5 px-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center text-xs font-bold text-primary">
+                        {customer.name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <span className="font-medium text-gray-900 text-sm">{customer.name}</span>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-5 text-gray-500 text-sm">{customer.email}</td>
+                  <td className="py-3.5 px-5 text-right font-medium text-gray-900 text-sm tabular-nums">{customer.totalOrders}</td>
+                  <td className="py-3.5 px-5 text-right font-semibold text-gray-900 text-sm tabular-nums">
                     ${customer.lifetimeValue.toLocaleString()}
                   </td>
-                  <td className="py-4 px-4 text-right text-gray-600">
-                    {new Date(customer.lastOrder).toLocaleDateString()}
+                  <td className="py-3.5 px-5 text-right text-gray-500 text-sm tabular-nums">
+                    {new Date(customer.lastOrder).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </td>
-                  <td className="py-4 px-4">
+                  <td className="py-3.5 px-5">
                     <span 
-                      className="inline-block px-3 py-1 rounded-full text-xs font-medium"
+                      className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
                       style={{ 
-                        backgroundColor: `${getSegmentColor(customer.segment)}20`,
+                        backgroundColor: `${getSegmentColor(customer.segment)}15`,
                         color: getSegmentColor(customer.segment)
                       }}
                     >
@@ -267,13 +285,17 @@ export default function CustomerInsights() {
       </div>
 
       {/* Cohort Chart Placeholder */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Month by Month Cohort Analysis</h2>
-        <div className="flex items-center justify-center h-80 text-gray-400">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all duration-200 overflow-hidden">
+        <div className="p-5 border-b border-gray-50">
+          <h2 className="text-lg font-bold text-gray-900">Month by Month Cohort Analysis</h2>
+        </div>
+        <div className="flex items-center justify-center h-72 bg-gradient-to-b from-gray-50/50 to-white">
           <div className="text-center">
-            <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <p>Interactive cohort chart visualization</p>
-            <p className="text-sm mt-2">New vs Returning customers by month ({cohortData.length} months)</p>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/5 flex items-center justify-center">
+              <Users className="w-8 h-8 text-primary/40" />
+            </div>
+            <p className="text-gray-400 font-medium">Interactive cohort chart visualization</p>
+            <p className="text-sm text-gray-300 mt-1.5">New vs Returning customers by month ({cohortData.length} months)</p>
           </div>
         </div>
       </div>
