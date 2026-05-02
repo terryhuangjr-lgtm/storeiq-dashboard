@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Filter, ChevronDown } from 'lucide-react'
+import { Search, Filter, ChevronDown, ArrowLeft, ArrowRight } from 'lucide-react'
 import ActivityFeed from '../components/ActivityFeed'
 import type { ActivityLog } from '../lib/types'
 import { supabase, isDemoMode } from '../lib/supabase'
@@ -234,7 +234,7 @@ export default function ActivityLog() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-5 border-b border-gray-50">
+        <div className="p-6 pb-4 border-b border-gray-100">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 transform -translate-y-1/2" />
@@ -246,51 +246,56 @@ export default function ActivityLog() {
                   setSearchTerm(e.target.value)
                   setCurrentPage(1)
                 }}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-gray-50/50 hover:bg-white focus:bg-white"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-gray-400"
               />
             </div>
-            <div className="relative">
+            <div className="relative min-w-[160px]">
+              <Filter className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 transform -translate-y-1/2 z-10" />
               <select
                 value={filter}
                 onChange={(e) => {
                   setFilter(e.target.value as any)
                   setCurrentPage(1)
                 }}
-                className="appearance-none pl-10 pr-10 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-gray-50/50 hover:bg-white focus:bg-white min-w-[160px]"
+                className="appearance-none w-full pl-10 pr-10 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer hover:border-gray-300 text-gray-700 font-medium"
               >
                 <option value="all">All Status</option>
                 <option value="success">Success</option>
                 <option value="warning">Warning</option>
                 <option value="error">Error</option>
               </select>
-              <Filter className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 transform -translate-y-1/2 pointer-events-none" />
-              <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 transform -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
           </div>
         </div>
 
-        <ActivityFeed activities={paginatedActivities} />
+        <div className="p-6">
+          <ActivityFeed activities={paginatedActivities} />
+        </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-4 border-t border-gray-50">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50/30">
             <p className="text-sm text-gray-400 tabular-nums">
-              Showing <span className="font-medium text-gray-600">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to <span className="font-medium text-gray-600">{Math.min(currentPage * ITEMS_PER_PAGE, filteredActivities.length)}</span> of{' '}
+              Showing <span className="font-medium text-gray-600">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to{' '}
+              <span className="font-medium text-gray-600">{Math.min(currentPage * ITEMS_PER_PAGE, filteredActivities.length)}</span> of{' '}
               <span className="font-medium text-gray-600">{filteredActivities.length}</span> activities
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="inline-flex items-center gap-1 px-3.5 py-2 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-600"
+                className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
               >
+                <ArrowLeft className="w-3.5 h-3.5" />
                 Previous
               </button>
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="inline-flex items-center gap-1 px-3.5 py-2 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-600"
+                className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
               >
                 Next
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
