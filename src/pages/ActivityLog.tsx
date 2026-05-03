@@ -59,6 +59,10 @@ export default function ActivityLog() {
       }
     }
     fetchActivities()
+
+    // Auto-refresh every 60 seconds for near-live activity feed
+    const interval = setInterval(fetchActivities, 60000)
+    return () => clearInterval(interval)
   }, [filter, currentPage])
 
   const getDemoActivities = (): ActivityLog[] => [
