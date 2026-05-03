@@ -34,7 +34,8 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
             <span className="text-gray-300 text-xs">
               {new Date(activity.created_at).toLocaleString('en-US', {
                 month: 'short', day: 'numeric',
-                hour: 'numeric', minute: '2-digit'
+                hour: 'numeric', minute: '2-digit',
+                timeZone: 'America/New_York',
               })}
             </span>
           </div>
