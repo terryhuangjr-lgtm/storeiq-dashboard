@@ -32,7 +32,7 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
               <p className="text-gray-400 text-xs leading-relaxed mb-1.5">{activity.details}</p>
             )}
             <span className="text-gray-300 text-xs">
-              {new Date(activity.created_at).toLocaleString('en-US', {
+              {new Date(activity.created_at + 'Z').toLocaleString('en-US', {
                 month: 'short', day: 'numeric',
                 hour: 'numeric', minute: '2-digit',
                 timeZone: 'America/New_York',
