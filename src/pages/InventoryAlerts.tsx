@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertCircle, AlertTriangle, Package, TrendingDown, ShoppingCart, CheckCircle, Search, Filter, ChevronDown } from 'lucide-react'
+import { AlertCircle, AlertTriangle, Package, TrendingDown, ShoppingCart, CheckCircle, Search, Filter, ChevronDown, TrendingUp } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 interface AlertData {
@@ -295,16 +295,30 @@ export default function InventoryAlerts() {
                       )}
                     </td>
                     <td className="py-4 px-4 text-center">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ${
-                        daysLeft !== null && daysLeft <= 10
-                          ? 'bg-critical/10 text-critical'
-                          : daysLeft !== null && daysLeft <= 20
-                          ? 'bg-danger/10 text-danger'
-                          : 'bg-warning/10 text-warning'
-                      }`}>
-                        <ShoppingCart className="w-3.5 h-3.5" />
-                        Order {reorderQty || '?'} units
-                      </span>
+                      {item.alert_type === 'stockout_risk' && reorderQty !== null ? (
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ${
+                          daysLeft !== null && daysLeft <= 10
+                            ? 'bg-critical/10 text-critical'
+                            : daysLeft !== null && daysLeft <= 20
+                            ? 'bg-danger/10 text-danger'
+                            : 'bg-warning/10 text-warning'
+                        }`}>
+                          <ShoppingCart className="w-3.5 h-3.5" />
+                          Order {reorderQty} units
+                        </span>
+                      ) : item.alert_type === 'dead_inventory' ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600">
+                          <Package className="w-3.5 h-3.5" />
+                          Review Stock
+                        </span>
+                      ) : item.alert_type === 'overstock' ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700">
+                          <TrendingUp className="w-3.5 h-3.5" />
+                          Run Promotion
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
                     </td>
                     <td className="py-4 px-2 text-center">
                       <button
