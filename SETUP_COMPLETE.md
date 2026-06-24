@@ -4,14 +4,14 @@
 
 ### 1. ✅ Environment Variables Configured
 
-#### `/home/clawd/storeiq-dashboard/.env`
+#### `/home/terry/storeiq-dashboard/.env`
 ```env
 VITE_SUPABASE_URL=https://fhmjvnphxsbtwcutqkvq.supabase.co
 VITE_SUPABASE_ANON_KEY=sb_publishable_3UOCSSyl5OVBkjzMCuETAw_VdcR7RML
 SUPABASE_SERVICE_KEY=sb_secret__wKl9kdsdxoOncKp13UgKg_jPrUIHY5
 ```
 
-#### `/home/clawd/clawd/automation/.env`
+#### `/home/terry/clawd/automation/.env`
 ```env
 VITE_SUPABASE_URL=https://fhmjvnphxsbtwcutqkvq.supabase.co
 SUPABASE_SERVICE_KEY=sb_secret__wKl9kdsdxoOncKp13UgKg_jPrUIHY5
@@ -19,7 +19,7 @@ SUPABASE_SERVICE_KEY=sb_secret__wKl9kdsdxoOncKp13UgKg_jPrUIHY5
 
 ### 2. ✅ Hermes to Supabase Sync Script Created
 
-**File**: `/home/clawd/clawd/automation/hermes-to-supabase.js`
+**File**: `/home/terry/clawd/automation/hermes-to-supabase.js`
 
 **Features**:
 - Reads Hermes report files from filesystem
@@ -106,13 +106,13 @@ All products updated with authentic fight gear:
 
 ### 1. Run Hermes to Supabase Sync
 ```bash
-cd /home/clawd/clawd/automation
+cd /home/terry/clawd/automation
 node hermes-to-supabase.js --dry-run
 ```
 
 ### 2. Build and Run StoreIQ Dashboard
 ```bash
-cd /home/clawd/storeiq-dashboard
+cd /home/terry/storeiq-dashboard
 npm run dev
 ```
 
