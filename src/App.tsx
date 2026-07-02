@@ -4,7 +4,6 @@ import { AuthProvider } from './hooks/useAuth'
 import Login from './pages/Login'
 import Overview from './pages/Overview'
 import SalesIntelligence from './pages/SalesIntelligence'
-import InventoryAlerts from './pages/InventoryAlerts'
 import CustomerInsights from './pages/CustomerInsights'
 import Reports from './pages/Reports'
 import ActivityLog from './pages/ActivityLog'
@@ -23,7 +22,6 @@ function App() {
           <Route element={<Layout />}>
             <Route path="/overview" element={<Overview />} />
             <Route path="/sales" element={<SalesIntelligence />} />
-            <Route path="/inventory" element={<InventoryAlerts />} />
             <Route path="/customers" element={<CustomerInsights />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/activity" element={<ActivityLog />} />

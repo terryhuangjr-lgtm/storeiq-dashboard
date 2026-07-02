@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useLocation, Link, Outlet, useNavigate } from 'react-router-dom'
-import { Store, LayoutDashboard, TrendingUp, AlertCircle, PackageSearch, Users, FileText, Settings, LogOut, Menu, X } from 'lucide-react'
+import { Store, LayoutDashboard, TrendingUp, PackageSearch, Users, FileText, Settings, LogOut, Menu, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import StoreSelector from './StoreSelector'
 
 export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [alertCount, setAlertCount] = useState(0)
   const location = useLocation()
   const navigate = useNavigate()
   const { session, signOut } = useAuth()
@@ -44,8 +43,7 @@ export default function Layout() {
   const navItems = [
     { icon: LayoutDashboard, label: 'Overview', to: '/overview' },
     { icon: TrendingUp, label: 'Sales Intelligence', to: '/sales' },
-    { icon: AlertCircle, label: 'Inventory Alerts', to: '/inventory', badge: alertCount },
-    { icon: PackageSearch, label: 'Reorder Queue', to: '/reorder' },
+    { icon: PackageSearch, label: 'Inventory', to: '/reorder' },
     { icon: Users, label: 'Customer Insights', to: '/customers' },
     { icon: FileText, label: 'All Reports', to: '/reports' },
     { icon: LogOut, label: 'Agent Activity Log', to: '/activity' },
@@ -106,11 +104,6 @@ export default function Layout() {
                   )}
                   <item.icon className={`w-5 h-5 ${isActive ? 'text-sidebarActive' : ''}`} />
                   <span>{item.label}</span>
-                  {item.badge && (
-                    <span className="ml-auto bg-danger text-white text-xs px-2 py-0.5 rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
                 </Link>
               )
             })}
