@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { ReorderQueueItem, PurchaseOrder } from '../lib/types'
 import { Package, AlertCircle, AlertTriangle, ShoppingCart, FileText, RefreshCw, Search, Download, ArrowUpDown, CheckSquare, Square } from 'lucide-react'
@@ -18,6 +18,7 @@ export default function ReorderPage() {
   const [editingPO, setEditingPO] = useState<PurchaseOrder | null>(null)
   const [editItems, setEditItems] = useState<any[]>([])
   const [printingPO, setPrintingPO] = useState<PurchaseOrder | null>(null)
+  const printingRef = useRef<PurchaseOrder | null>(null)
 
   const loadData = async () => {
     try {
@@ -141,14 +142,31 @@ export default function ReorderPage() {
   }
 
   const openPrintView = (po: PurchaseOrder) => {
+    printingRef.current = po
     setPrintingPO(po)
-    // Print after render
-    setTimeout(() => window.print(), 300)
+    // Delay to let React render the print view before opening print dialog
+    setTimeout(() => {
+      if (document.getElementById('po-print-view')) {
+        document.body.classList.add('printing-po')
+        window.print()
+      }
+    }, 100)
   }
 
   const closePrintView = () => {
+    document.body.classList.remove('printing-po')
+    printingRef.current = null
     setPrintingPO(null)
   }
+
+  // Listen for print dialog close to auto-hide the overlay
+  useEffect(() => {
+    const handler = () => {
+      if (printingRef.current) closePrintView()
+    }
+    window.addEventListener('afterprint', handler)
+    return () => window.removeEventListener('afterprint', handler)
+  }, [])
 
   // Summary counts
   const zeroCount = queue.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'zero').length
@@ -486,10 +504,9 @@ export default function ReorderPage() {
           <style>{`
             @media print {
               @page { margin: 0.75in; size: A4; }
-              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-              #po-print-view { position: relative !important; }
-              .print\\:hidden { display: none !important; }
-              .print\\:block { display: block !important; }
+              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white !important; }
+              body.printing-po #root { display: none !important; }
+              #po-print-view { display: block !important; position: absolute !important; top: 0; left: 0; width: 100%; z-index: 999999; }
             }
             @media screen {
               #po-print-view { background: white; overflow-y: auto; }
