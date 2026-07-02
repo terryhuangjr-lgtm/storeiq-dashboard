@@ -8,13 +8,14 @@ const STORE_ID = '00000000-0000-0000-0000-000000000001'
 export default function ReorderPage() {
   const [queue, setQueue] = useState<ReorderQueueItem[]>([])
   const [draftPOs, setDraftPOs] = useState<PurchaseOrder[]>([])
+  const [inPOItems, setInPOItems] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [sortBy, setSortBy] = useState<'status' | 'product' | 'supplier'>('status')
-  const [filterStatus, setFilterStatus] = useState<'all' | 'zero' | 'critical' | 'low' | 'warning'>('all')
+  const [filterStatus, setFilterStatus] = useState<'all' | 'zero' | 'critical' | 'low' | 'warning' | 'in_po'>('all')
+  const [showInPO, setShowInPO] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [generatingPO, setGeneratingPO] = useState(false)
-  const [downloadingPO, setDownloadingPO] = useState<string | null>(null)
   const [editingPO, setEditingPO] = useState<PurchaseOrder | null>(null)
   const [editItems, setEditItems] = useState<any[]>([])
   const [printingPO, setPrintingPO] = useState<PurchaseOrder | null>(null)
@@ -35,7 +36,19 @@ export default function ReorderPage() {
         .select('*')
         .eq('store_id', STORE_ID)
         .order('created_at', { ascending: false })
-      if (poData) setDraftPOs(poData as PurchaseOrder[])
+      if (poData) {
+        setDraftPOs(poData as PurchaseOrder[])
+        // Build set of variant_ids currently on active (non-deleted) POs
+        const poVariants = new Set<string>()
+        for (const po of poData as PurchaseOrder[]) {
+          if (po.items) {
+            for (const item of po.items as any[]) {
+              if (item.variant_id) poVariants.add(item.variant_id)
+            }
+          }
+        }
+        setInPOItems(poVariants)
+      }
     } catch (err) {
       console.error('Error loading:', err)
     } finally {
@@ -69,7 +82,15 @@ export default function ReorderPage() {
   // Filter + sort
   let filtered = [...queue]
   if (filterStatus !== 'all') {
-    filtered = filtered.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === filterStatus)
+    if (filterStatus === 'in_po') {
+      filtered = filtered.filter(i => inPOItems.has(i.variant_id))
+    } else {
+      filtered = filtered.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === filterStatus)
+    }
+  }
+  // If showInPO is off, hide items that are already on a PO (but still show in_po filter)
+  if (!showInPO && filterStatus !== 'in_po') {
+    filtered = filtered.filter(i => !inPOItems.has(i.variant_id))
   }
   if (searchQuery) {
     const q = searchQuery.toLowerCase()
@@ -132,10 +153,6 @@ export default function ReorderPage() {
       })
       if (error) { console.error('PO error:', error.message); return }
 
-      for (const item of selectedItems) {
-        await supabase.from('reorder_queue').update({ status: 'added_to_po' })
-          .eq('store_id', STORE_ID).eq('variant_id', item.variant_id).eq('status', 'pending')
-      }
       setSelected(new Set())
       await loadData()
     } finally { setGeneratingPO(false) }
@@ -169,10 +186,11 @@ export default function ReorderPage() {
   }, [])
 
   // Summary counts
-  const zeroCount = queue.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'zero').length
-  const criticalCount = queue.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'critical').length
-  const lowCount = queue.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'low').length
-  const warningCount = queue.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'warning').length
+  const zeroCount = queue.filter(i => !inPOItems.has(i.variant_id) && urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'zero').length
+  const criticalCount = queue.filter(i => !inPOItems.has(i.variant_id) && urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'critical').length
+  const lowCount = queue.filter(i => !inPOItems.has(i.variant_id) && urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'low').length
+  const warningCount = queue.filter(i => !inPOItems.has(i.variant_id) && urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'warning').length
+  const inPOCount = queue.filter(i => inPOItems.has(i.variant_id)).length
 
   // ─── PO Edit / Delete ──────────────────────────────────────────────────
 
@@ -225,16 +243,16 @@ export default function ReorderPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Reorder Queue</h1>
-          <p className="text-xs text-gray-400">{queue.length} items below threshold</p>
+          <h1 className="text-xl font-bold text-gray-900">Inventory</h1>
+          <p className="text-xs text-gray-400">{queue.length} items monitored · {queue.length - inPOCount} actionable</p>
         </div>
         <button onClick={loadData} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
           <RefreshCw className="w-3.5 h-3.5" /> Refresh
         </button>
       </div>
 
-      {/* Summary cards — keep */}
-      <div className="grid grid-cols-4 gap-3">
+      {/* Summary cards — actionable only (excludes items in PO) */}
+      <div className="grid grid-cols-5 gap-3">
         <div className="bg-critical/10 rounded-lg px-4 py-3 border border-critical/20">
           <p className="text-xl font-bold text-critical">{zeroCount}</p>
           <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Zero Stock</p>
@@ -246,6 +264,10 @@ export default function ReorderPage() {
         <div className="bg-warning/10 rounded-lg px-4 py-3 border border-warning/20">
           <p className="text-xl font-bold text-warning">{warningCount + lowCount}</p>
           <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Warning/Low</p>
+        </div>
+        <div className="bg-blue-50 rounded-lg px-4 py-3 border border-blue-200">
+          <p className="text-xl font-bold text-blue-700">{inPOCount}</p>
+          <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">In PO</p>
         </div>
         <div className="bg-blue-50 rounded-lg px-4 py-3 border border-blue-200">
           <p className="text-xl font-bold text-blue-700">{draftPOs.length}</p>
@@ -284,6 +306,7 @@ export default function ReorderPage() {
             <option value="critical">Critical</option>
             <option value="low">Low</option>
             <option value="warning">Warning</option>
+            <option value="in_po">In PO ({inPOCount})</option>
           </select>
           <select value={sortBy} onChange={e => setSortBy(e.target.value as any)}
             className="text-xs px-3 py-1.5 bg-white border border-gray-200 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
@@ -300,6 +323,11 @@ export default function ReorderPage() {
               Clear ({selected.size})
             </button>
           )}
+          <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer ml-auto">
+            <input type="checkbox" checked={showInPO} onChange={e => setShowInPO(e.target.checked)}
+              className="w-3.5 h-3.5 rounded border-gray-300 text-primary focus:ring-primary" />
+            Show In PO
+          </label>
         </div>
 
         {/* Compact table */}
@@ -335,17 +363,28 @@ export default function ReorderPage() {
                 return (
                   <tr key={key} className={`hover:bg-gray-50/50 transition-colors ${isSelected ? 'bg-primary/5' : ''}`}>
                     <td className="px-3 py-2 text-center">
-                      <button onClick={() => toggleSelect(key)} className="focus:outline-none">
-                        {isSelected
-                          ? <CheckSquare className="w-4 h-4 text-primary" />
-                          : <Square className="w-4 h-4 text-gray-300 hover:text-gray-400" />}
-                      </button>
+                      {inPOItems.has(item.variant_id) ? (
+                        <span title="On active PO"><FileText className="w-4 h-4 text-blue-400 mx-auto" /></span>
+                      ) : (
+                        <button onClick={() => toggleSelect(key)} className="focus:outline-none">
+                          {isSelected
+                            ? <CheckSquare className="w-4 h-4 text-primary" />
+                            : <Square className="w-4 h-4 text-gray-300 hover:text-gray-400" />}
+                        </button>
+                      )}
                     </td>
                     <td className="px-3 py-2">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${colorClass}`}>
-                        {tier === 'zero' ? <AlertCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
-                        {tierLabel(tier)}
-                      </span>
+                      {inPOItems.has(item.variant_id) ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                          <FileText className="w-3 h-3" />
+                          IN PO
+                        </span>
+                      ) : (
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${colorClass}`}>
+                          {tier === 'zero' ? <AlertCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+                          {tierLabel(tier)}
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-2">
                       <span className="text-xs font-medium text-gray-900 block truncate max-w-[180px]">{item.product_title}</span>
