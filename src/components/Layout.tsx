@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useLocation, Link, Outlet, useNavigate } from 'react-router-dom'
 import { Store, LayoutDashboard, TrendingUp, PackageSearch, Users, FileText, Settings, LogOut, Menu, X } from 'lucide-react'
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import StoreSelector from './StoreSelector'
 
@@ -19,27 +18,6 @@ export default function Layout() {
     }
   }, [session, navigate])
 
-  // Live alert badge count
-  useEffect(() => {
-    const fetchAlertCount = async () => {
-      try {
-        const { data: storeData } = await supabase
-          .from('stores').select('id').limit(1).single()
-        const storeId = storeData?.id || '00000000-0000-0000-0000-000000000001'
-        const { count } = await supabase
-          .from('alerts').select('*', { count: 'exact', head: true })
-          .eq('store_id', storeId).eq('is_acknowledged', false)
-        if (count !== null) setAlertCount(count)
-      } catch (err) {
-        // Silently fall back — badge won't show
-      }
-    }
-    fetchAlertCount()
-    // Refresh count every 60 seconds
-    const interval = setInterval(fetchAlertCount, 60000)
-    return () => clearInterval(interval)
-  }, [])
-
   const navItems = [
     { icon: LayoutDashboard, label: 'Overview', to: '/overview' },
     { icon: TrendingUp, label: 'Sales Intelligence', to: '/sales' },
@@ -53,8 +31,8 @@ export default function Layout() {
     <div className="flex h-screen bg-background">
       {/* Mobile sidebar overlay */}
       {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden" 
+        <div
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -92,8 +70,8 @@ export default function Layout() {
                   className={`
                     flex items-center gap-3 px-4 py-3 rounded-lg text-sidebarText text-sm font-medium
                     transition-all duration-200 relative group
-                    ${isActive 
-                      ? 'bg-white text-sidebarActive font-semibold' 
+                    ${isActive
+                      ? 'bg-white text-sidebarActive font-semibold'
                       : 'hover:bg-white/5 hover:text-white'
                     }
                   `}
@@ -135,7 +113,7 @@ export default function Layout() {
         {/* Mobile Header */}
         <header className="lg:hidden bg-white border-b border-gray-200 p-4">
           <div className="flex items-center justify-between">
-            <button 
+            <button
               onClick={() => setIsSidebarOpen(true)}
               className="p-2 hover:bg-gray-100 rounded-lg"
             >
