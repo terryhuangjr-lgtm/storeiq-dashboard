@@ -15,6 +15,8 @@ export default function ReorderPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [generatingPO, setGeneratingPO] = useState(false)
   const [downloadingPO, setDownloadingPO] = useState<string | null>(null)
+  const [editingPO, setEditingPO] = useState<PurchaseOrder | null>(null)
+  const [editItems, setEditItems] = useState<any[]>([])
 
   const loadData = async () => {
     try {
@@ -88,11 +90,14 @@ export default function ReorderPage() {
     })
   }
 
-  const selectAllZero = () => {
-    const zeroIds = filtered.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'zero').map(i => i.variant_id + i.status)
+  const selectAllFiltered = () => {
+    const allIds = filtered.map(i => i.variant_id + i.status)
     setSelected(prev => {
+      // If all already selected, deselect all — toggle behavior
+      const allSelected = allIds.every(id => prev.has(id))
+      if (allSelected) return new Set()
       const next = new Set(prev)
-      for (const id of zeroIds) next.add(id)
+      for (const id of allIds) next.add(id)
       return next
     })
   }
@@ -137,22 +142,18 @@ export default function ReorderPage() {
   const downloadPDF = async (poId: string) => {
     setDownloadingPO(poId)
     try {
-      const { data } = await supabase.from('purchase_orders').select('*').eq('id', poId).single()
-      if (!data) return
-
-      const resp = await fetch('/api/po-pdf', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ po: data }),
-      })
+      const resp = await fetch(`/api/po-pdf?id=${poId}`)
       if (resp.ok) {
         const blob = await resp.blob()
+        // Get filename from Content-Disposition header or use PO number
+        const disposition = resp.headers.get('Content-Disposition')
+        const filename = disposition?.match(/filename="?(.+?)"?$/)?.[1] || `po-${poId.slice(0,8)}.pdf`
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
-        a.href = url; a.download = `po-${data.po_number.toLowerCase()}.pdf`; a.click()
+        a.href = url; a.download = filename; a.click()
         URL.revokeObjectURL(url)
       } else {
-        // Fallback: call the Node script via API or show error
-        alert('PDF generation not available in browser. Use the server-side API route.')
+        alert('Failed to generate PDF. Check the server logs.')
       }
     } finally { setDownloadingPO(null) }
   }
@@ -162,6 +163,46 @@ export default function ReorderPage() {
   const criticalCount = queue.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'critical').length
   const lowCount = queue.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'low').length
   const warningCount = queue.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'warning').length
+
+  // ─── PO Edit / Delete ──────────────────────────────────────────────────
+
+  const openPOEditor = (po: PurchaseOrder) => {
+    setEditingPO(po)
+    setEditItems((po.items || []).map((item: any) => ({ ...item })))
+  }
+
+  const updateEditItemQty = (idx: number, qty: number) => {
+    setEditItems(prev => {
+      const next = [...prev]
+      next[idx] = { ...next[idx], qty }
+      return next
+    })
+  }
+
+  const savePOEdits = async () => {
+    if (!editingPO) return
+    try {
+      await supabase.from('purchase_orders').update({
+        items: editItems,
+        total_items: editItems.length,
+      }).eq('id', editingPO.id)
+      setEditingPO(null)
+      setEditItems([])
+      await loadData()
+    } catch (err: any) {
+      console.error('Save PO error:', err.message)
+    }
+  }
+
+  const deletePO = async (poId: string) => {
+    if (!window.confirm('Delete this purchase order? This cannot be undone.')) return
+    try {
+      await supabase.from('purchase_orders').delete().eq('id', poId)
+      await loadData()
+    } catch (err: any) {
+      console.error('Delete PO error:', err.message)
+    }
+  }
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
@@ -209,9 +250,6 @@ export default function ReorderPage() {
             {selected.size} item{selected.size !== 1 ? 's' : ''} selected
           </p>
           <div className="flex gap-2">
-            <button onClick={() => setSelected(new Set())} className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
-              Clear
-            </button>
             <button onClick={buildPO} disabled={generatingPO} className="px-4 py-1.5 text-xs font-medium text-white bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50 flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5" />
               {generatingPO ? 'Building...' : `Build PO (${selected.size})`}
@@ -243,10 +281,15 @@ export default function ReorderPage() {
             <option value="product">Sort: Product Name</option>
             <option value="supplier">Sort: Supplier</option>
           </select>
-          <button onClick={selectAllZero}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-critical bg-critical/5 border border-critical/20 rounded-lg hover:bg-critical/10">
-            <CheckSquare className="w-3.5 h-3.5" /> Select All Zero
+          <button onClick={selectAllFiltered}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10">
+            <CheckSquare className="w-3.5 h-3.5" /> {selected.size > 0 && filtered.every(i => selected.has(i.variant_id + i.status)) ? 'Deselect All' : 'Select All'}
           </button>
+          {selected.size > 0 && (
+            <button onClick={() => setSelected(new Set())} className="text-xs text-gray-400 hover:text-gray-600">
+              Clear ({selected.size})
+            </button>
+          )}
         </div>
 
         {/* Compact table */}
@@ -351,6 +394,10 @@ export default function ReorderPage() {
                   }`}>
                     {po.status}
                   </span>
+                  <button onClick={() => openPOEditor(po)}
+                    className="px-2 py-1.5 text-[10px] font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">Edit</button>
+                  <button onClick={() => deletePO(po.id)}
+                    className="px-2 py-1.5 text-[10px] font-medium text-danger bg-danger/5 rounded-lg hover:bg-danger/10">Delete</button>
                   <button onClick={() => downloadPDF(po.id)} disabled={downloadingPO === po.id}
                     className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50">
                     <Download className="w-3 h-3" />
@@ -359,6 +406,84 @@ export default function ReorderPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* PO Edit Modal */}
+      {editingPO && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onClick={() => setEditingPO(null)}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-4 max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">{editingPO.po_number}</h3>
+                <p className="text-xs text-gray-400">{editingPO.supplier_name} · {editItems.length} items</p>
+              </div>
+              <button onClick={() => setEditingPO(null)} className="p-1 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            {/* Scrollable items */}
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+              <p className="text-xs text-gray-400 mb-1">Edit order quantities — changes save to the PO.</p>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left py-2 text-[10px] font-semibold text-gray-500 uppercase">Product</th>
+                    <th className="text-left py-2 text-[10px] font-semibold text-gray-500 uppercase">Variant</th>
+                    <th className="text-center py-2 text-[10px] font-semibold text-gray-500 uppercase">Current Stock</th>
+                    <th className="text-center py-2 text-[10px] font-semibold text-gray-500 uppercase w-24">Qty to Order</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {editItems.map((item, idx) => (
+                    <tr key={idx}>
+                      <td className="py-2.5 pr-2">
+                        <span className="text-xs font-medium text-gray-900">{item.product_title}</span>
+                      </td>
+                      <td className="py-2.5 pr-2">
+                        <span className="text-xs text-gray-500">{item.variant_title || '—'}</span>
+                      </td>
+                      <td className="py-2.5 text-center">
+                        <span className="text-xs text-gray-600">{item.current_stock ?? '?'}</span>
+                      </td>
+                      <td className="py-2.5 text-center">
+                        <input
+                          type="number"
+                          min={0}
+                          value={item.qty}
+                          onChange={e => updateEditItemQty(idx, parseInt(e.target.value) || 0)}
+                          className="w-20 text-center px-2 py-1.5 bg-white border border-gray-200 rounded-lg text-xs focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between flex-shrink-0">
+              <div className="text-xs text-gray-400">
+                Total: {editItems.reduce((sum, i) => sum + (i.qty || 0), 0)} units across {editItems.length} items
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => downloadPDF(editingPO.id)} disabled={downloadingPO === editingPO.id}
+                  className="px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 flex items-center gap-1.5">
+                  <Download className="w-3.5 h-3.5" /> Export PDF
+                </button>
+                <button onClick={() => deletePO(editingPO.id)}
+                  className="px-4 py-2 text-xs font-medium text-danger bg-danger/5 border border-danger/20 rounded-xl hover:bg-danger/10">
+                  Delete PO
+                </button>
+                <button onClick={savePOEdits}
+                  className="px-5 py-2 text-xs font-medium text-white bg-primary rounded-xl hover:bg-primary/90 flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5" /> Save Changes
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
