@@ -207,6 +207,10 @@ export default function ReorderPage() {
     })
   }
 
+  const removeEditItem = (idx: number) => {
+    setEditItems(prev => prev.filter((_, i) => i !== idx))
+  }
+
   const savePOEdits = async () => {
     if (!editingPO) return
     try {
@@ -484,6 +488,7 @@ export default function ReorderPage() {
                     <th className="text-left py-2 text-[10px] font-semibold text-gray-500 uppercase">Variant</th>
                     <th className="text-center py-2 text-[10px] font-semibold text-gray-500 uppercase">Current Stock</th>
                     <th className="text-center py-2 text-[10px] font-semibold text-gray-500 uppercase w-24">Qty to Order</th>
+                    <th className="w-10 py-2"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -506,6 +511,12 @@ export default function ReorderPage() {
                           onChange={e => updateEditItemQty(idx, parseInt(e.target.value) || 0)}
                           className="w-20 text-center px-2 py-1.5 bg-white border border-gray-200 rounded-lg text-xs focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
                         />
+                      </td>
+                      <td className="py-2.5 text-center">
+                        <button onClick={() => removeEditItem(idx)}
+                          className="text-[10px] text-danger hover:text-danger/80 font-medium">
+                          Remove
+                        </button>
                       </td>
                     </tr>
                   ))}
