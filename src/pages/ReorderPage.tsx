@@ -17,6 +17,7 @@ export default function ReorderPage() {
   const [downloadingPO, setDownloadingPO] = useState<string | null>(null)
   const [editingPO, setEditingPO] = useState<PurchaseOrder | null>(null)
   const [editItems, setEditItems] = useState<any[]>([])
+  const [printingPO, setPrintingPO] = useState<PurchaseOrder | null>(null)
 
   const loadData = async () => {
     try {
@@ -139,23 +140,14 @@ export default function ReorderPage() {
     } finally { setGeneratingPO(false) }
   }
 
-  const downloadPDF = async (poId: string) => {
-    setDownloadingPO(poId)
-    try {
-      const resp = await fetch(`/api/po-pdf?id=${poId}`)
-      if (resp.ok) {
-        const blob = await resp.blob()
-        // Get filename from Content-Disposition header or use PO number
-        const disposition = resp.headers.get('Content-Disposition')
-        const filename = disposition?.match(/filename="?(.+?)"?$/)?.[1] || `po-${poId.slice(0,8)}.pdf`
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url; a.download = filename; a.click()
-        URL.revokeObjectURL(url)
-      } else {
-        alert('Failed to generate PDF. Check the server logs.')
-      }
-    } finally { setDownloadingPO(null) }
+  const openPrintView = (po: PurchaseOrder) => {
+    setPrintingPO(po)
+    // Print after render
+    setTimeout(() => window.print(), 300)
+  }
+
+  const closePrintView = () => {
+    setPrintingPO(null)
   }
 
   // Summary counts
@@ -398,10 +390,10 @@ export default function ReorderPage() {
                     className="px-2 py-1.5 text-[10px] font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">Edit</button>
                   <button onClick={() => deletePO(po.id)}
                     className="px-2 py-1.5 text-[10px] font-medium text-danger bg-danger/5 rounded-lg hover:bg-danger/10">Delete</button>
-                  <button onClick={() => downloadPDF(po.id)} disabled={downloadingPO === po.id}
-                    className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50">
+                  <button onClick={() => openPrintView(po)}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                     <Download className="w-3 h-3" />
-                    {downloadingPO === po.id ? '...' : 'PDF'}
+                    PDF
                   </button>
                 </div>
               </div>
@@ -470,7 +462,7 @@ export default function ReorderPage() {
                 Total: {editItems.reduce((sum, i) => sum + (i.qty || 0), 0)} units across {editItems.length} items
               </div>
               <div className="flex gap-2">
-                <button onClick={() => downloadPDF(editingPO.id)} disabled={downloadingPO === editingPO.id}
+                <button onClick={() => openPrintView(editingPO)}
                   className="px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 flex items-center gap-1.5">
                   <Download className="w-3.5 h-3.5" /> Export PDF
                 </button>
@@ -484,6 +476,100 @@ export default function ReorderPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Print View — renders as a full-page PO for window.print() */}
+      {printingPO && (
+        <div id="po-print-view" className="fixed inset-0 z-[100] print:relative print:inset-auto">
+          <style>{`
+            @media print {
+              @page { margin: 0.75in; size: A4; }
+              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              #po-print-view { position: relative !important; }
+              .print\\:hidden { display: none !important; }
+              .print\\:block { display: block !important; }
+            }
+            @media screen {
+              #po-print-view { background: white; overflow-y: auto; }
+            }
+          `}</style>
+          {/* Close button — hidden when printing */}
+          <div className="print:hidden sticky top-0 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between z-10">
+            <p className="text-sm font-medium text-gray-600">
+              <FileText className="w-4 h-4 inline mr-1.5" />
+              Print Preview — Ctrl+P or Cmd+P to save as PDF
+            </p>
+            <button onClick={closePrintView} className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+              Close
+            </button>
+          </div>
+          <div className="p-8 max-w-[210mm] mx-auto" style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
+            {/* PO Header */}
+            <h1 style={{ fontSize: 22, fontWeight: 700, textAlign: 'center', color: '#1e293b', marginBottom: 2 }}>PURCHASE ORDER</h1>
+            <p style={{ fontSize: 13, fontWeight: 700, textAlign: 'center', color: '#3b82f6', marginBottom: 16 }}>{printingPO.po_number}</p>
+            <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', marginBottom: 12 }} />
+
+            {/* Supplier */}
+            <table style={{ width: '100%', fontSize: 11, marginBottom: 8 }}>
+              <tr>
+                <td style={{ fontWeight: 700, color: '#1e293b', width: 80, padding: '2px 0' }}>Supplier:</td>
+                <td style={{ color: '#64748b' }}>{printingPO.supplier_name}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: 700, color: '#1e293b', width: 80, padding: '2px 0' }}>Date:</td>
+                <td style={{ color: '#64748b' }}>{new Date(printingPO.created_at).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: 700, color: '#1e293b', verticalAlign: 'top', padding: '2px 0' }}>Ship To:</td>
+                <td style={{ color: '#64748b' }}>
+                  Superare Fight Gear LLC<br />
+                  Warehouse Fulfillment Center<br />
+                  New York, NY 10001
+                </td>
+              </tr>
+            </table>
+
+            <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', marginBottom: 10 }} />
+
+            {/* Items */}
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#1e293b', marginBottom: 6 }}>Items Ordered</p>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ textAlign: 'left', padding: '4px 6px', color: '#64748b', fontWeight: 600 }}>Product</th>
+                  <th style={{ textAlign: 'left', padding: '4px 6px', color: '#64748b', fontWeight: 600 }}>Variant</th>
+                  <th style={{ textAlign: 'center', padding: '4px 6px', color: '#64748b', fontWeight: 600 }}>Qty</th>
+                  <th style={{ textAlign: 'center', padding: '4px 6px', color: '#64748b', fontWeight: 600 }}>Stock</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(printingPO.items || []).map((item: any, idx: number) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '5px 6px', color: '#1e293b', fontWeight: 500 }}>{item.product_title || 'Unknown'}</td>
+                    <td style={{ padding: '5px 6px', color: '#64748b' }}>{item.variant_title || '—'}</td>
+                    <td style={{ padding: '5px 6px', textAlign: 'center', color: '#1e293b', fontWeight: 600 }}>{item.qty || 0}</td>
+                    <td style={{ padding: '5px 6px', textAlign: 'center', color: '#64748b' }}>{item.current_stock ?? '?'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', marginTop: 6, marginBottom: 10 }} />
+
+            {/* Notes */}
+            {printingPO.notes && (
+              <>
+                <p style={{ fontSize: 10, fontWeight: 700, color: '#1e293b', marginBottom: 2 }}>Notes:</p>
+                <p style={{ fontSize: 9, color: '#64748b', marginBottom: 12 }}>{printingPO.notes}</p>
+              </>
+            )}
+
+            {/* Footer */}
+            <p style={{ fontSize: 8, color: '#64748b', textAlign: 'center', marginTop: 20 }}>
+              Generated by Superare Ops — {new Date().toLocaleString()}
+            </p>
           </div>
         </div>
       )}
