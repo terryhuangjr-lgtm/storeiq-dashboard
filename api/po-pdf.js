@@ -1,18 +1,18 @@
 /**
- * Vercel Serverless Function: Generate PO PDF
+ * Vercel Serverless Function: Generate PO PDF (ESM)
  *
  * GET /api/po-pdf?id=<po_uuid>
  * Returns a PDF file download.
  *
  * Reads Supabase for PO data, generates PDF with pdfkit.
  */
-const { createClient } = require('@supabase/supabase-js');
-const PDFDocument = require('pdfkit');
+import { createClient } from '@supabase/supabase-js';
+import PDFDocument from 'pdfkit';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
-module.exports = async (req, res) => {
+export default async (req, res) => {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
 
