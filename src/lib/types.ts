@@ -17,6 +17,67 @@ export interface Report {
   period_end?: string;
 }
 
+// Reorder & Transfer Module Types
+export interface InventoryVariant {
+  inventory_item_id: string;
+  product_title: string;
+  variant_title: string | null;
+  variant_id: string;
+}
+
+export interface ReorderThreshold {
+  id: string;
+  store_id: string;
+  variant_id: string;
+  product_title: string;
+  variant_title: string | null;
+  threshold_qty: number;
+  suggested_reorder_qty: number;
+  supplier_name: string;
+  lead_time_days: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Supplier {
+  id: string;
+  store_id: string;
+  name: string;
+  email: string;
+  phone: string;
+  notes: string;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  store_id: string;
+  po_number: string;
+  supplier_name: string;
+  status: string;
+  items: any[];
+  total_items: number;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReorderQueueItem {
+  id: string;
+  store_id: string;
+  variant_id: string;
+  product_title: string;
+  variant_title: string | null;
+  current_qty: number;
+  threshold_qty: number;
+  suggested_reorder_qty: number;
+  supplier_name: string;
+  lead_time_days: number;
+  urgency_score: number;
+  status: string;
+  last_checked: string;
+}
+
 export type ReportType = 
   | 'sales_velocity'
   | 'reorder_alerts'

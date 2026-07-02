@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useLocation, Link, Outlet, useNavigate } from 'react-router-dom'
-import { Store, LayoutDashboard, TrendingUp, AlertCircle, Users, FileText, Settings, LogOut, Menu, X } from 'lucide-react'
+import { Store, LayoutDashboard, TrendingUp, AlertCircle, PackageSearch, Users, FileText, Settings, LogOut, Menu, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import StoreSelector from './StoreSelector'
@@ -45,6 +45,7 @@ export default function Layout() {
     { icon: LayoutDashboard, label: 'Overview', to: '/overview' },
     { icon: TrendingUp, label: 'Sales Intelligence', to: '/sales' },
     { icon: AlertCircle, label: 'Inventory Alerts', to: '/inventory', badge: alertCount },
+    { icon: PackageSearch, label: 'Reorder Queue', to: '/reorder' },
     { icon: Users, label: 'Customer Insights', to: '/customers' },
     { icon: FileText, label: 'All Reports', to: '/reports' },
     { icon: LogOut, label: 'Agent Activity Log', to: '/activity' },

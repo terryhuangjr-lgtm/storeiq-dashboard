@@ -8,6 +8,8 @@ import InventoryAlerts from './pages/InventoryAlerts'
 import CustomerInsights from './pages/CustomerInsights'
 import Reports from './pages/Reports'
 import ActivityLog from './pages/ActivityLog'
+import ThresholdSettings from './pages/ThresholdSettings'
+import ReorderPage from './pages/ReorderPage'
 import Layout from './components/Layout'
 import { supabase } from './lib/supabase'
 
@@ -25,6 +27,8 @@ function App() {
             <Route path="/customers" element={<CustomerInsights />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/activity" element={<ActivityLog />} />
+            <Route path="/settings" element={<ThresholdSettings />} />
+            <Route path="/reorder" element={<ReorderPage />} />
             <Route path="/" element={<Navigate to="/login" replace />} />
           </Route>
 
