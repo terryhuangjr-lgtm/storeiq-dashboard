@@ -505,8 +505,8 @@ export default function ReorderPage() {
             @media print {
               @page { margin: 0.75in; size: A4; }
               body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white !important; }
-              body.printing-po #root { display: none !important; }
-              #po-print-view { display: block !important; position: absolute !important; top: 0; left: 0; width: 100%; z-index: 999999; }
+              body.printing-po #root { visibility: hidden !important; }
+              body.printing-po #po-print-view { visibility: visible !important; position: absolute !important; top: 0; left: 0; width: 100%; z-index: 999999; }
             }
             @media screen {
               #po-print-view { background: white; overflow-y: auto; }
