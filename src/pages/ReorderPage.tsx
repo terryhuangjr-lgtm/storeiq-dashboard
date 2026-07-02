@@ -41,11 +41,14 @@ export default function ReorderPage() {
 
   useEffect(() => { loadData() }, [])
 
-  // Urgency helpers
-  const urgencyTier = (score: number, qty: number) => {
+  // Urgency helpers — based on stock deficit severity
+  const urgencyTier = (score: number, qty: number, threshold: number) => {
     if (qty === 0 || score >= 100) return 'zero'
-    if (score >= 5) return 'critical'
-    if (score >= 2) return 'low'
+    // Use deficit severity: how depleted are we?
+    const deficit = threshold - qty
+    const pctRemaining = threshold > 0 ? qty / threshold : 0
+    if (pctRemaining <= 0.3 || deficit >= threshold * 0.7) return 'critical'
+    if (pctRemaining <= 0.6 || deficit >= threshold * 0.4) return 'low'
     return 'warning'
   }
 
@@ -62,7 +65,7 @@ export default function ReorderPage() {
   // Filter + sort
   let filtered = [...queue]
   if (filterStatus !== 'all') {
-    filtered = filtered.filter(i => urgencyTier(i.urgency_score, i.current_qty) === filterStatus)
+    filtered = filtered.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === filterStatus)
   }
   if (searchQuery) {
     const q = searchQuery.toLowerCase()
@@ -86,7 +89,7 @@ export default function ReorderPage() {
   }
 
   const selectAllZero = () => {
-    const zeroIds = filtered.filter(i => urgencyTier(i.urgency_score, i.current_qty) === 'zero').map(i => i.variant_id + i.status)
+    const zeroIds = filtered.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'zero').map(i => i.variant_id + i.status)
     setSelected(prev => {
       const next = new Set(prev)
       for (const id of zeroIds) next.add(id)
@@ -155,10 +158,10 @@ export default function ReorderPage() {
   }
 
   // Summary counts
-  const zeroCount = queue.filter(i => urgencyTier(i.urgency_score, i.current_qty) === 'zero').length
-  const criticalCount = queue.filter(i => urgencyTier(i.urgency_score, i.current_qty) === 'critical').length
-  const lowCount = queue.filter(i => urgencyTier(i.urgency_score, i.current_qty) === 'low').length
-  const warningCount = queue.filter(i => urgencyTier(i.urgency_score, i.current_qty) === 'warning').length
+  const zeroCount = queue.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'zero').length
+  const criticalCount = queue.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'critical').length
+  const lowCount = queue.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'low').length
+  const warningCount = queue.filter(i => urgencyTier(i.urgency_score, i.current_qty, i.threshold_qty) === 'warning').length
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
@@ -269,7 +272,7 @@ export default function ReorderPage() {
               )}
               {filtered.map((item) => {
                 const key = item.variant_id + item.status
-                const tier = urgencyTier(item.urgency_score, item.current_qty)
+                const tier = urgencyTier(item.urgency_score, item.current_qty, item.threshold_qty)
                 const isSelected = selected.has(key)
                 const colorClass = tier === 'zero' ? 'text-critical bg-critical/5 border-critical/20' :
                   tier === 'critical' ? 'text-danger bg-danger/5 border-danger/20' :
